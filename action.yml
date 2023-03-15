@@ -1,5 +1,5 @@
 name: 'DuckDB setup'
-description: 'Iinstall and setup DuckDB'
+description: 'Install and setup DuckDB'
 inputs:
   version:  # version of duckDB
     description: 'The version to install'
@@ -7,4 +7,4 @@ inputs:
     default: 'v0.7.1'
 runs:
   using: 'node16'
-  main: 'index.js'
+  main: 'dist/index.js'
