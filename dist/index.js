@@ -9811,6 +9811,26 @@ try {
     const check_version = 'duckdb --version'
     const cleanup = 'rm duckdb_cli-linux-amd64.zip'
 
+    let version_final = version;
+    if (version == null){
+        $.ajax({
+            url: 'https://api.github.com/repos/duckdb/duckdb/releases/latest',
+            dataType:'json',
+            beforeSend: function(xhr) {
+                xhr.setRequestHeader("Accept", "application/vnd.github+json");
+                xhr.setRequestHeader('X-GitHub-Api-Version', '2022-11-28');
+            }, success: function(data){
+                console.log(data);
+                var result = JSON.parse(data);
+                console.log("-----------");
+                console.log(result);
+            }
+        })
+        version_final = 'new_version'
+    }
+
+    console.log(version_final)
+
     console.log(`📦 Install DuckDB version : ${version}` );
     exec(`${wget} && ${unzip} && ${install} && ${cleanup} && ${check_version}`, (error, stdout, stderr) => {
         if (error) {
