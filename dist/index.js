@@ -9812,7 +9812,7 @@ try {
     const cleanup = 'rm duckdb_cli-linux-amd64.zip'
 
     let version_final = version;
-    if (version == null){
+    if (version == 'latest'){
         $.ajax({
             url: 'https://api.github.com/repos/duckdb/duckdb/releases/latest',
             dataType:'json',
