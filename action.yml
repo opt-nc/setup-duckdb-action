@@ -4,7 +4,7 @@ inputs:
   version:  # version of duckDB
     description: 'The version to install'
     required: false
-    default: 'v0.7.1'
+    default: 'latest'
 runs:
   using: 'node16'
   main: 'dist/index.js'
