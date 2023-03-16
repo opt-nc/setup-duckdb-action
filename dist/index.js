@@ -9807,7 +9807,7 @@ try {
     const url = `https://github.com/duckdb/duckdb/releases/download/${version}/duckdb_cli-linux-amd64.zip`
     const wget = `wget ${url}`
     const unzip = `unzip duckdb_cli-linux-amd64.zip`
-    const install = 'mkdir /opt/duckdb && mv duckdb /opt/duckdb && chmod +x /opt/duckdb/duckdb && ln -s /opt/duckdb/duckdb /usr/bin/duckdb'
+    const install = 'mkdir /opt/duckdb && mv duckdb /opt/duckdb && chmod +x /opt/duckdb/duckdb && sudo ln -s /opt/duckdb/duckdb /usr/bin/duckdb'
     const check_version = 'duckdb --version'
     const cleanup = 'rm duckdb_cli-linux-amd64.zip'
 
