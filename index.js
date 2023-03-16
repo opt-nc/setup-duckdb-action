@@ -20,10 +20,10 @@ module.exports = async function () {
             core.error(`❌ Failed to get latest DuckDB version`);
             core.setFailed(res.data);
         } else if (res.data.status === 'successful') {
-            console.log(res.data);
-            var result = JSON.parse(data);
-            console.log("-----------");
-            console.log(result);
+            core.info(res.data);
+            var result = JSON.parse(res.data);
+            core.info("-----------");
+            core.info(result);
         }
 
         core.info(`📦 Install DuckDB version : ${version}`);
