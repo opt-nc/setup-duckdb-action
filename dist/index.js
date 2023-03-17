@@ -53,7 +53,6 @@ module.exports = async function () {
             }
             if (stderr) {
                 core.debug(stderr);
-                return;
             }
             core.info(`🚀 DuckDB ${selectedVersion} successfully installed.`);
         });
