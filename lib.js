@@ -31,7 +31,7 @@ module.exports = async function () {
                 core.warning(`🆕 DuckDb ${latestVersion} is available.`);
         }
 
-        core.info(`📥 Install DuckDB version : ${selectedVersion}`);
+        core.info(`📥 Installing DuckDB version : ${selectedVersion}`);
         const url = `https://github.com/duckdb/duckdb/releases/download/${selectedVersion}/duckdb_cli-linux-amd64.zip`
         const wgetCmd = `wget ${url}`
         const unzipCmd = `unzip duckdb_cli-linux-amd64.zip`
@@ -46,7 +46,7 @@ module.exports = async function () {
                 return;
             }
             if (stderr) {
-                core.error(`❌ ${stderr}`);
+                core.debug(stderr);
                 return;
             }
             core.info(`🚀 DuckDB ${selectedVersion} successfully installed.`);
