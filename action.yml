@@ -1,5 +1,8 @@
 name: 'DuckDB setup'
 description: 'Install and setup DuckDB'
+branding:
+  icon: archive
+  color: green
 inputs:
   version:  # version of duckDB
     description: 'The version to install'
