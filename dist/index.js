@@ -21,9 +21,11 @@ module.exports = async function () {
 
         //let version_final = version;
         const headers = {'Accept': 'application/vnd.github+json', 'X-GitHub-Api-Version': '2022-11-28'}
-        const res = await axios.get( 'https://api.github.com/repos/duckdb/duckdb/releases/latest', {headers: headers, responseType: 'json' });
-        core.info(`result data : ${res}`)
+        const res = await axios.get( 'https://api.github.com/repos/duckdb/duckdb/releases/latest', { headers: headers });
+        core.info(`result : ${res}`)
         core.info(`result data : ${res.data}`)
+        core.info(`result status : ${res.status}`)
+        core.info(`result data header : ${res.headers['content-type']}`);
 
         if (res.status != 200) {
             core.error(`❌ Failed to get latest DuckDB version`);
