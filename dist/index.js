@@ -22,6 +22,7 @@ module.exports = async function () {
         //let version_final = version;
         const headers = {'Accept': 'application/vnd.github+json', 'X-GitHub-Api-Version': '2022-11-28'}
         const res = await axios({url: 'https://api.github.com/repos/duckdb/duckdb/releases/latest', headers});
+        core.info(`result data : ${res.data}`)
         if (res.data.status === 'failed' || res.data.status === 'cancelled') {
             core.error(`❌ Failed to get latest DuckDB version`);
             core.setFailed(res.data);
@@ -35,15 +36,15 @@ module.exports = async function () {
         core.info(`📦 Install DuckDB version : ${version}`);
         exec(`${wget} && ${unzip} && ${install} && ${cleanup} && ${check_version}`, (error, stdout, stderr) => {
             if (error) {
-                console.log(`error: ${error.message}`);
+                core.error(`error: ${error.message}`);
                 core.setFailed(error.message);
                 return;
             }
             if (stderr) {
-                console.log(`stderr: ${stderr}`);
+                core.error(`stderr: ${stderr}`);
                 return;
             }
-            console.log("🚀 DuckDB successfully installed.");
+            core.info("🚀 DuckDB successfully installed.");
         });
     } catch (error) {
         core.setFailed(error.message);
