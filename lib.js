@@ -9,11 +9,6 @@ module.exports = async function () {
         let latestVersion;
         let selectedVersion;
 
-        const wgetCmd = `wget ${url}`
-        const unzipCmd = `unzip duckdb_cli-linux-amd64.zip`
-        const installCmd = 'mkdir /opt/duckdb && mv duckdb /opt/duckdb && chmod +x /opt/duckdb/duckdb && sudo ln -s /opt/duckdb/duckdb /usr/bin/duckdb'
-        const checkVersionCmd = 'duckdb --version'
-        const cleanupCmd = 'rm duckdb_cli-linux-amd64.zip'
         core.info(`🔍 looking for the latest DuckDB version.`);
         const headers = {'Accept': 'application/vnd.github+json', 'X-GitHub-Api-Version': '2022-11-28'}
         const res = await axios.get('https://api.github.com/repos/duckdb/duckdb/releases/latest', {headers: headers});
@@ -38,6 +33,12 @@ module.exports = async function () {
 
         core.info(`📥 Install DuckDB version : ${selectedVersion}`);
         const url = `https://github.com/duckdb/duckdb/releases/download/${selectedVersion}/duckdb_cli-linux-amd64.zip`
+        const wgetCmd = `wget ${url}`
+        const unzipCmd = `unzip duckdb_cli-linux-amd64.zip`
+        const installCmd = 'mkdir /opt/duckdb && mv duckdb /opt/duckdb && chmod +x /opt/duckdb/duckdb && sudo ln -s /opt/duckdb/duckdb /usr/bin/duckdb'
+        const checkVersionCmd = 'duckdb --version'
+        const cleanupCmd = 'rm duckdb_cli-linux-amd64.zip'
+
         exec(`${wgetCmd} && ${unzipCmd} && ${installCmd} && ${cleanupCmd} && ${checkVersionCmd}`, (error, stdout, stderr) => {
             if (error) {
                 core.error(`❌ ${error.message}`);
