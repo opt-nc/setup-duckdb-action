@@ -15,7 +15,7 @@ module.exports = async function () {
 
         //let version_final = version;
         const headers = {'Accept': 'application/vnd.github+json', 'X-GitHub-Api-Version': '2022-11-28'}
-        const res = await axios({url: 'https://api.github.com/repos/duckdb/duckdb/releases/latest', headers});
+        const res = await axios({url: 'https://api.github.com/repos/duckdb/duckdb/releases/latest', headers: headers, responseType: 'json' });
         core.info(`result data : ${res.data.status}`)
         core.info(`result data : ${res.data.tagName}`)
         if (res.data.status === 'failed' || res.data.status === 'cancelled') {
