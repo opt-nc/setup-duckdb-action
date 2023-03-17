@@ -5,15 +5,15 @@ const axios = require('axios');
 
 module.exports = async function () {
     try {
-        let version = core.getInput('version');
+        const inputVersion = core.getInput('version');
         let latestVersion;
-        const url = `https://github.com/duckdb/duckdb/releases/download/${version}/duckdb_cli-linux-amd64.zip`
+        let selectedVersion;
+
         const wgetCmd = `wget ${url}`
         const unzipCmd = `unzip duckdb_cli-linux-amd64.zip`
         const installCmd = 'mkdir /opt/duckdb && mv duckdb /opt/duckdb && chmod +x /opt/duckdb/duckdb && sudo ln -s /opt/duckdb/duckdb /usr/bin/duckdb'
         const checkVersionCmd = 'duckdb --version'
         const cleanupCmd = 'rm duckdb_cli-linux-amd64.zip'
-
         core.info(`🔍 looking for the latest DuckDB version.`);
         const headers = {'Accept': 'application/vnd.github+json', 'X-GitHub-Api-Version': '2022-11-28'}
         const res = await axios.get('https://api.github.com/repos/duckdb/duckdb/releases/latest', {headers: headers});
@@ -25,16 +25,19 @@ module.exports = async function () {
             latestVersion = res.data.tag_name;
         }
 
-        if (version === 'latest') {
+        if (inputVersion === 'latest') {
             core.info(`📦 DuckDb latest version requested : ${latestVersion} will be installed.`);
+            selectedVersion = latestVersion;
         }
         else {
-            core.info(`📦 DuckDb ${version} requested.`);
-            if (version != latestVersion)
-                core.warning(`🆕 DuckDb ${version} is available.`);
+            selectedVersion = inputVersion;
+            core.info(`📦 DuckDb ${inputVersion} requested.`);
+            if (inputVersion != latestVersion)
+                core.warning(`🆕 DuckDb ${latestVersion} is available.`);
         }
 
-        core.info(`📥 Install DuckDB version : ${version}`);
+        core.info(`📥 Install DuckDB version : ${selectedVersion}`);
+        const url = `https://github.com/duckdb/duckdb/releases/download/${selectedVersion}/duckdb_cli-linux-amd64.zip`
         exec(`${wgetCmd} && ${unzipCmd} && ${installCmd} && ${cleanupCmd} && ${checkVersionCmd}`, (error, stdout, stderr) => {
             if (error) {
                 core.error(`❌ ${error.message}`);
@@ -45,7 +48,7 @@ module.exports = async function () {
                 core.error(`❌ ${stderr}`);
                 return;
             }
-            core.info(`🚀 DuckDB ${version} successfully installed.`);
+            core.info(`🚀 DuckDB ${selectedVersion} successfully installed.`);
         });
     } catch (error) {
         core.setFailed(error.message);
