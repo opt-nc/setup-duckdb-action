@@ -9,14 +9,14 @@ module.exports = async function () {
         let latestVersion;
         let selectedVersion;
 
-        core.info(`🔍 looking for the latest DuckDB version.`);
+        core.debug(`🔍 looking for the latest DuckDB version.`);
         const headers = {'Accept': 'application/vnd.github+json', 'X-GitHub-Api-Version': '2022-11-28'}
         const res = await axios.get('https://api.github.com/repos/duckdb/duckdb/releases/latest', {headers: headers});
         if (res.status != 200) {
             core.error(`❌ Failed to get latest DuckDB version`);
             core.setFailed(res.statusText);
         } else {
-            core.info(`✔️ Latest DuckDB version found is ${res.data.tag_name}.`);
+            core.debug(`✔️ Latest DuckDB version found is ${res.data.tag_name}.`);
             latestVersion = res.data.tag_name;
         }
 
