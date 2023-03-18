@@ -17,6 +17,7 @@ jobs:
       - run: npm ci
 
       - run: npm run prepare
+      - run: git status
       - name: Compare the expected and actual dist/ directories
         run: |
           if [ "$(git diff --ignore-space-at-eol dist/ | wc -l)" -gt "0" ]; then
