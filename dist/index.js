@@ -6,3 +6,4 @@
 var __webpack_exports__ = {};
 const action = require('./lib');
 (async function () {await action()})();
+
