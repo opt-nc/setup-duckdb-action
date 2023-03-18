@@ -1,14 +1,13 @@
 {
   "name": "setup-duckdb-action",
-  "version": "1.0.0",
   "description": "Github action that installs DuckDB with the version provided in input.",
-  "main": "dist/index.js",
+  "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "lint": "eslint .",
+    "prepare": "ncc build index.js -o dist --source-map --license licenses.txt",
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "all": "npm run lint && npm run prepare"
   },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
   "dependencies": {
     "@actions/core": "^1.10.0",
     "axios": "^1.3.4"
