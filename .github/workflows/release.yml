@@ -23,6 +23,8 @@ jobs:
             exit 1
           fi
 
+      - run: npm ci
+
       - name: 📦 Semantic Release
         if: github.ref == 'refs/heads/main'
         id: release
