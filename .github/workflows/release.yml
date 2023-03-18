@@ -14,6 +14,8 @@ jobs:
           node-version: 16
           cache: 'npm'
 
+      - run: npm ci
+
       - run: npm run prepare
       - name: Compare the expected and actual dist/ directories
         run: |
@@ -22,9 +24,6 @@ jobs:
             git diff
             exit 1
           fi
-
-      - run: npm ci
-      - run: npm test
 
       - name: 📦 Semantic Release
         if: github.ref == 'refs/heads/main'
