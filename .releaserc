@@ -1,0 +1,68 @@
+{
+  "branches": "main",
+  "debug": "false",
+  "plugins": [
+    "@semantic-release/commit-analyzer",
+    "@semantic-release/github",
+    [
+       "@semantic-release/release-notes-generator",
+          {
+            "preset": "conventionalcommits",
+            "presetConfig": {
+              "types": [
+                {
+                  "type": "feat",
+                  "section": ":rocket: Features",
+                  "hidden": false
+                },
+                {
+                  "type": "features",
+                  "section": ":rocket: Features",
+                   "hidden": false
+                   },
+                {
+                  "type": "fix",
+                  "section": ":bug: Bug Fixes",
+                  "hidden": false
+                },
+                {
+                  "type": "docs",
+                  "section": ":memo: Documentation",
+                  "hidden": false
+                },
+                {
+                  "type": "style",
+                  "section": ":barber: Styles",
+                  "hidden": false
+                },
+                {
+                  "type": "refactor",
+                  "section": ":zap: Code Refactoring",
+                  "hidden": false
+                },
+                {
+                  "type": "perf",
+                  "section": ":fast_forward: Performance Improvements",
+                  "hidden": false
+                },
+                {
+                  "type": "test",
+                  "section": ":white_check_mark: Tests",
+                  "hidden": false
+                },
+                {
+                  "type": "ci",
+                  "section": ":repeat: Continuous Integration",
+                  "hidden": false
+                },
+                {
+                  "type": "chore",
+                  "section": "Miscellaneous Chores",
+                  "hidden": false
+                }
+              ]
+            }
+          }
+    ]
+  ]
+}
