@@ -24,6 +24,7 @@ jobs:
           fi
 
       - run: npm ci
+      - run: npm test
 
       - name: 📦 Semantic Release
         if: github.ref == 'refs/heads/main'
