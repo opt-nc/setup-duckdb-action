@@ -29,7 +29,7 @@ jobs:
       - name: 📦 Semantic Release
         if: github.ref == 'refs/heads/main'
         id: release
-        uses: cycjimmy/semantic-release-action@v2
+        uses: cycjimmy/semantic-release-action@v3.4.0
         with:
           extra_plugins: |
             @semantic-release/exec
