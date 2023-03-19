@@ -2,7 +2,6 @@
   "name": "setup-duckdb-action",
   "description": "Github action that installs DuckDB with the version provided in input.",
   "main": "index.js",
-  "type": "module",
   "scripts": {
     "lint": "eslint .",
     "prepare": "ncc build index.js -o dist --source-map --license licenses.txt",
