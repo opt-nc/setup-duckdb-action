@@ -1,4 +1,4 @@
-name: Release
+name: 🚀 Release
 
 on:
   push:
@@ -14,11 +14,10 @@ jobs:
           node-version: 16
           cache: 'npm'
 
-      - run: npm ci
+      - name: 🧪 Build
+        run: npm ci && npm run prepare
 
-      - run: npm run prepare
-      - run: git status
-      - name: Compare the expected and actual dist/ directories
+      - name: ↔️ Compare the expected and actual dist/ directories
         run: |
           if [ "$(git diff --ignore-space-at-eol dist/ | wc -l)" -gt "0" ]; then
             echo "❌ Detected uncommitted changes after build.  See status below:"
