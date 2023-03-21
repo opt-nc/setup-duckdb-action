@@ -9,7 +9,7 @@
 # the `language` matrix defined below to confirm you have the correct set of
 # supported CodeQL languages.
 #
-name: "CodeQL"
+name: "🛡️ CodeQL"
 
 on:
   push:
@@ -22,7 +22,7 @@ on:
 
 jobs:
   analyze:
-    name: Analyze
+    name: 🛡️ Analyze
     runs-on: ubuntu-latest
     permissions:
       actions: read
@@ -66,5 +66,5 @@ jobs:
     #   make bootstrap
     #   make release
 
-      - name: Perform CodeQL Analysis
+      - name: 🔬 Perform CodeQL Analysis
         uses: github/codeql-action/analyze@v2
