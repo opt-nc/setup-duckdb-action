@@ -7,10 +7,10 @@ require('./sourcemap-register.js');/******/ (() => { // webpackBootstrap
 const core = __nccwpck_require__(2186);
 const { exec } = __nccwpck_require__(2081);
 const axios = __nccwpck_require__(8757);
+const github = __nccwpck_require__(716);
 
 module.exports = async function () {
     try {
-        const inputVersion = core.getInput('version');
         let latestVersion;
         let selectedVersion;
 
@@ -23,6 +23,20 @@ module.exports = async function () {
         } else {
             core.debug(`✔️ Latest DuckDB version found is ${res.data.tag_name}.`);
             latestVersion = res.data.tag_name;
+        }
+
+        let inputVersion = core.getInput('version');
+        const varVersion = github.getEnvironmentVariable("DUCKDB_VERSION");
+        if (!inputVersion){
+            if(varVersion) {
+                core.debug(`ℹ️ Version has been set at repository or organization level : ${varVersion}`);
+                inputVersion = varVersion;
+            } else {
+                inputVersion = 'latest';
+            }
+        }
+        else {
+            inputVersion = core.getInput('version');
         }
 
         if (inputVersion === 'latest') {
@@ -6209,6 +6223,14 @@ function version(uuid) {
 
 var _default = version;
 exports["default"] = _default;
+
+/***/ }),
+
+/***/ 716:
+/***/ ((module) => {
+
+module.exports = eval("require")("@actions/github");
+
 
 /***/ }),
 

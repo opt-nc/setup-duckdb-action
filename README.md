@@ -12,7 +12,11 @@ This action installs DuckDB with the version provided in input.
 
 ### `version`
 
-**Not Required** The version you want to install. If no version defined, the latest version will be installed.
+**Not Required** The version you want to install. 
+If no version defined :
+- if repository variable DUCKDB_VERSION set, it will be used
+- else if organization variable DUCK_DB_VERSION set, it will be used,
+- else the latest version will be installed.
 
 ## Example usage
 

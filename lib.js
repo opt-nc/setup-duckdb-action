@@ -1,10 +1,10 @@
 const core = require('@actions/core');
 const { exec } = require('child_process');
 const axios = require('axios');
+const github = require('@actions/github');
 
 module.exports = async function () {
     try {
-        const inputVersion = core.getInput('version');
         let latestVersion;
         let selectedVersion;
 
@@ -17,6 +17,20 @@ module.exports = async function () {
         } else {
             core.debug(`✔️ Latest DuckDB version found is ${res.data.tag_name}.`);
             latestVersion = res.data.tag_name;
+        }
+
+        let inputVersion = core.getInput('version');
+        const varVersion = github.getEnvironmentVariable("DUCKDB_VERSION");
+        if (!inputVersion){
+            if(varVersion) {
+                core.debug(`ℹ️ Version has been set at repository or organization level : ${varVersion}`);
+                inputVersion = varVersion;
+            } else {
+                inputVersion = 'latest';
+            }
+        }
+        else {
+            inputVersion = core.getInput('version');
         }
 
         if (inputVersion === 'latest') {
