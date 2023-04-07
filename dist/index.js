@@ -27,15 +27,15 @@ module.exports = async function () {
             latestVersion = res.data.tag_name;
         }
 
-        const response = await axios.get(`https://api.github.com/repos/opt-nc/setup-duckdb-action/environments`, {
+        const response = await axios.get(`https://api.github.com/repos/opt-nc/setup-duckdb-action/actions/variables/DUCKDB_VERSION`, {
             headers: {
                 Authorization: `Bearer ${token}`,
                 Accept: 'application/vnd.github.v3+json'
             }
         });
 
-        const environments = response.data;
-        core.info(`environnement ${environments}`);
+        const variable = response.data;
+        core.info(`environnement ${variable}`);
 
 
 
