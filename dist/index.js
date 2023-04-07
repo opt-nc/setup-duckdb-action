@@ -25,8 +25,11 @@ module.exports = async function () {
             latestVersion = res.data.tag_name;
         }
 
+        const token = core.getInput('token');
         let inputVersion = core.getInput('version');
-        const varVersion = github.getEnvironmentVariable("DUCKDB_VERSION");
+        const octokit = github.getOctokit(token);
+        const context = github.context;
+        core.info(`context = ${context}`)
         if (!inputVersion){
             if(varVersion) {
                 core.debug(`ℹ️ Version has been set at repository or organization level : ${varVersion}`);
