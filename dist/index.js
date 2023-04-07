@@ -27,9 +27,6 @@ module.exports = async function () {
             latestVersion = res.data.tag_name;
         }
 
-        const repo = process.env.GITHUB_REPOSITORY; // Récupère le nom du repository
-        const owner = repo.split('/')[0]; // Récupère le nom de l'organisation
-
         const response = await axios.get(`https://api.github.com/repos/opt-nc/setup-duckdb-action/environments`, {
             headers: {
                 Authorization: `Bearer ${token}`,
@@ -38,7 +35,7 @@ module.exports = async function () {
         });
 
         const environments = response.data;
-        core.info(environments);
+        core.info(`environnement ${environments}`);
 
 
 
