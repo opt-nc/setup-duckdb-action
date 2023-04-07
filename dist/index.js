@@ -14,6 +14,8 @@ module.exports = async function () {
         let latestVersion;
         let selectedVersion;
 
+        const token = core.getInput('token');
+
         core.debug(`🔍 looking for the latest DuckDB version.`);
         const headers = {'Accept': 'application/vnd.github+json', 'X-GitHub-Api-Version': '2022-11-28'}
         const res = await axios.get('https://api.github.com/repos/duckdb/duckdb/releases/latest', {headers: headers});
@@ -28,9 +30,9 @@ module.exports = async function () {
         const repo = process.env.GITHUB_REPOSITORY; // Récupère le nom du repository
         const owner = repo.split('/')[0]; // Récupère le nom de l'organisation
 
-        const response = await axios.get(`https://api.github.com/repos/${owner}/${repo}/environments`, {
+        const response = await axios.get(`https://api.github.com/repos/opt-nc/setup-duckdb-action/environments`, {
             headers: {
-                Authorization: `Bearer ${process.env.GITHUB_TOKEN}`,
+                Authorization: `Bearer ${token}`,
                 Accept: 'application/vnd.github.v3+json'
             }
         });
@@ -39,7 +41,7 @@ module.exports = async function () {
         core.info(environments);
 
 
-        const token = core.getInput('token');
+
         let inputVersion = core.getInput('version');
         let varVersion;
         const context = github.context;
