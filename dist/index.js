@@ -27,7 +27,7 @@ module.exports = async function () {
 
         const token = core.getInput('token');
         let inputVersion = core.getInput('version');
-        const octokit = github.getOctokit(token);
+        let varVersion;
         const context = github.context;
         core.info(`context = ${context}`)
         if (!inputVersion){
