@@ -25,6 +25,20 @@ module.exports = async function () {
             latestVersion = res.data.tag_name;
         }
 
+        const repo = process.env.GITHUB_REPOSITORY; // Récupère le nom du repository
+        const owner = repo.split('/')[0]; // Récupère le nom de l'organisation
+
+        const response = await axios.get(`https://api.github.com/repos/${owner}/${repo}/environments`, {
+            headers: {
+                Authorization: `Bearer ${process.env.GITHUB_TOKEN}`,
+                Accept: 'application/vnd.github.v3+json'
+            }
+        });
+
+        const environments = response.data;
+        core.info(environments);
+
+
         const token = core.getInput('token');
         let inputVersion = core.getInput('version');
         let varVersion;
