@@ -1,7 +1,7 @@
 const core = require('@actions/core');
 const { exec } = require('child_process');
 const axios = require('axios');
-const github = require('@actions/github');
+const { Octokit } = require("@octokit/core");
 
 module.exports = async function () {
     try {
@@ -21,14 +21,27 @@ module.exports = async function () {
             latestVersion = res.data.tag_name;
         }
 
-        const response = await axios.get(`https://api.github.com/repos/opt-nc/setup-duckdb-action/actions/variables/DUCKDB_VERSION`, {
+        const octokit = new Octokit({ auth: token });
+        const response = await octokit.request('GET /orgs/{org}/actions/variables/{name}', {
+            org: 'opt-nc',
+            name: 'DUCKDB_VERSION',
             headers: {
-                Authorization: `Bearer ${token}`,
-                Accept: 'application/vnd.github.v3+json'
+                'X-GitHub-Api-Version': '2022-11-28'
             }
-        });
+        })
 
-        const variable = response.data;
+
+
+
+
+            // = await axios.get(`https://api.github.com/repos/opt-nc/setup-duckdb-action/actions/variables/DUCKDB_VERSION`, {
+            // headers: {
+            //     Authorization: `Bearer ${token}`,
+            //     Accept: 'application/vnd.github.v3+json'
+            // }
+        // });
+
+        const variable = response.data.value;
         core.info(`environnement ${variable}`);
 
 
