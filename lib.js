@@ -30,6 +30,12 @@ module.exports = async function () {
                 core.warning(`🆕 DuckDb ${latestVersion} is available.`);
         }
 
+        const regex = '^v[0-9]*.[0-9]*.[0-9]*$';
+        if(!selectedVersion.match(regex)) {
+            core.error("Version not valid.");
+            throw "Version not valid.";
+        }
+
         core.info(`📥 Installing DuckDB version : ${selectedVersion}`);
         const url = `https://github.com/duckdb/duckdb/releases/download/${selectedVersion}/duckdb_cli-linux-amd64.zip`
         const wgetCmd = `wget ${url}`
