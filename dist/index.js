@@ -36,6 +36,12 @@ module.exports = async function () {
                 core.warning(`🆕 DuckDb ${latestVersion} is available.`);
         }
 
+        const regex = '^v[0-9]*.[0-9]*.[0-9]*$';
+        if(!selectedVersion.match(regex)) {
+            core.error("Version not valid.");
+            throw "Version not valid.";
+        }
+
         core.info(`📥 Installing DuckDB version : ${selectedVersion}`);
         const url = `https://github.com/duckdb/duckdb/releases/download/${selectedVersion}/duckdb_cli-linux-amd64.zip`
         const wgetCmd = `wget ${url}`
@@ -6344,7 +6350,7 @@ module.exports = require("zlib");
 /***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
 
 "use strict";
-// Axios v1.3.4 Copyright (c) 2023 Matt Zabriskie and contributors
+// Axios v1.3.5 Copyright (c) 2023 Matt Zabriskie and contributors
 
 
 const FormData$1 = __nccwpck_require__(4334);
@@ -7923,9 +7929,7 @@ function parseTokens(str) {
   return tokens;
 }
 
-function isValidHeaderName(str) {
-  return /^[-_a-zA-Z]+$/.test(str.trim());
-}
+const isValidHeaderName = (str) => /^[-_a-zA-Z0-9^`|~,!#$%&'*+.]+$/.test(str.trim());
 
 function matchHeaderValue(context, value, header, filter, isHeaderNameFilter) {
   if (utils.isFunction(filter)) {
@@ -8298,7 +8302,7 @@ function buildFullPath(baseURL, requestedURL) {
   return requestedURL;
 }
 
-const VERSION = "1.3.4";
+const VERSION = "1.3.5";
 
 function parseProtocol(url) {
   const match = /^([-+\w]{1,25})(:?\/\/|:)/.exec(url);
@@ -10100,11 +10104,17 @@ class Axios {
       }, false);
     }
 
-    if (paramsSerializer !== undefined) {
-      validator.assertOptions(paramsSerializer, {
-        encode: validators.function,
-        serialize: validators.function
-      }, true);
+    if (paramsSerializer != null) {
+      if (utils.isFunction(paramsSerializer)) {
+        config.paramsSerializer = {
+          serialize: paramsSerializer
+        };
+      } else {
+        validator.assertOptions(paramsSerializer, {
+          encode: validators.function,
+          serialize: validators.function
+        }, true);
+      }
     }
 
     // Set config.method
