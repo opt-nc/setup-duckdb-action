@@ -3,23 +3,22 @@
 [![🚀 Release](https://github.com/opt-nc/setup-duckdb-action/actions/workflows/release.yml/badge.svg)](https://github.com/opt-nc/setup-duckdb-action/actions/workflows/release.yml)
 
 
-# Setup Duckdb Action
+# ℹ️ Setup Duckdb Action
 
+This action installs [`duckdb`](https://github.com/duckdb/duckdb) with the version provided in input.
 
-This action installs DuckDB with the version provided in input.
-
-## Inputs
+## 📜 Inputs
 
 ### `version`
 
 **Not Required** The version you want to install. If no version defined, the latest version will be installed.
 
-## Example usage
+## 🚀 Example usage
 
 ```yaml
 uses: opt-nc/setup-duckdb-action@v1.0.0
 with:
-  version: v0.7.1
+  version: v0.8.1
 ```
 
 ```yaml
