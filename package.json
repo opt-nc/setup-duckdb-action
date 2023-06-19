@@ -14,6 +14,6 @@
   },
   "devDependencies": {
     "@vercel/ncc": "^0.34.0",
-    "eslint": "^8.39.0"
+    "eslint": "^8.43.0"
   }
 }
