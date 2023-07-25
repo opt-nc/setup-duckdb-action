@@ -24,3 +24,7 @@ with:
 ```yaml
 uses: opt-nc/setup-duckdb-action@v1.0.0
 ```
+
+## 📑 Real life usecases (drop your own)
+
+- [🦆 Effortless Data Quality w/duckdb on GitHub ♾️ ](https://dev.to/optnc/effortless-data-quality-wduckdb-on-github-2mkb)https://dev.to/optnc/effortless-data-quality-wduckdb-on-github-2mkb
