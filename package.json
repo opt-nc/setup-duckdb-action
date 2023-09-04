@@ -10,10 +10,10 @@
   },
   "dependencies": {
     "@actions/core": "^1.10.0",
-    "axios": "^1.4.0"
+    "axios": "^1.5.0"
   },
   "devDependencies": {
     "@vercel/ncc": "^0.34.0",
-    "eslint": "^8.43.0"
+    "eslint": "^8.48.0"
   }
 }
