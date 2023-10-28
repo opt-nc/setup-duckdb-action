@@ -25,6 +25,7 @@ with:
 uses: opt-nc/setup-duckdb-action@v1.0.0
 ```
 
-## 📑 Real life usecases (drop your own)
+## 📑 Related resources
 
-- [🦆 Effortless Data Quality w/duckdb on GitHub ♾️ ](https://dev.to/optnc/effortless-data-quality-wduckdb-on-github-2mkb)https://dev.to/optnc/effortless-data-quality-wduckdb-on-github-2mkb
+- [🦆 Effortless Data Quality w/duckdb on GitHub ♾️ ](https://dev.to/optnc/effortless-data-quality-wduckdb-on-github-2mkb)
+- [📖 DuckDB in Action (MEAP)](https://www.manning.com/books/duckdb-in-action) 
