@@ -44,6 +44,19 @@ module.exports = async function () {
         const checkVersionCmd = 'duckdb --version'
         const cleanupCmd = 'rm duckdb_cli-linux-amd64.zip'
 
+        exec (`${wgetCmd}`, (error, stdout, stderr) => {
+            if (error) {
+                core.error(`❌ ${error.message}`);
+                core.setFailed(error.message);
+                return;
+            }
+            if (stderr) {
+                core.error(stderr);
+            }
+            core.info(`🚀 DuckDB ${selectedVersion} downloaded.`);
+        });
+
+
         exec(`${wgetCmd} && ${unzipCmd} && ${installCmd} && ${cleanupCmd} && ${checkVersionCmd}`, (error, stdout, stderr) => {
             if (error) {
                 core.error(`❌ ${error.message}`);
