@@ -15,7 +15,7 @@ module.exports = async function () {
             core.error(`❌ Failed to get latest DuckDB version`);
             core.setFailed(res.statusText);
         } else {
-            core.debug(`✔️ Latest DuckDB version found is ${res.data.tag_name}.`);
+            core.info(`✔️ Latest DuckDB version found is ${res.data.tag_name}.`);
             latestVersion = res.data.tag_name;
         }
 
@@ -51,7 +51,7 @@ module.exports = async function () {
                 return;
             }
             if (stderr) {
-                core.debug(stderr);
+                core.error(stderr);
             }
             core.info(`🚀 DuckDB ${selectedVersion} successfully installed.`);
         });
