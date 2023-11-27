@@ -21,7 +21,7 @@ module.exports = async function () {
             core.error(`❌ Failed to get latest DuckDB version`);
             core.setFailed(res.statusText);
         } else {
-            core.debug(`✔️ Latest DuckDB version found is ${res.data.tag_name}.`);
+            core.info(`✔️ Latest DuckDB version found is ${res.data.tag_name}.`);
             latestVersion = res.data.tag_name;
         }
 
@@ -50,6 +50,19 @@ module.exports = async function () {
         const checkVersionCmd = 'duckdb --version'
         const cleanupCmd = 'rm duckdb_cli-linux-amd64.zip'
 
+        exec (`${wgetCmd}`, (error, stdout, stderr) => {
+            if (error) {
+                core.error(`❌ ${error.message}`);
+                core.setFailed(error.message);
+                return;
+            }
+            if (stderr) {
+                core.error(stderr);
+            }
+            core.info(`🚀 DuckDB ${selectedVersion} downloaded.`);
+        });
+
+
         exec(`${wgetCmd} && ${unzipCmd} && ${installCmd} && ${cleanupCmd} && ${checkVersionCmd}`, (error, stdout, stderr) => {
             if (error) {
                 core.error(`❌ ${error.message}`);
@@ -57,7 +70,7 @@ module.exports = async function () {
                 return;
             }
             if (stderr) {
-                core.debug(stderr);
+                core.error(stderr);
             }
             core.info(`🚀 DuckDB ${selectedVersion} successfully installed.`);
         });
