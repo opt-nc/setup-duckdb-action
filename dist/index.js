@@ -62,8 +62,57 @@ module.exports = async function () {
             core.info(`🚀 DuckDB ${selectedVersion} downloaded.`);
         });
 
+        exec (`${unzipCmd}`, (error, stdout, stderr) => {
+            if (error) {
+                core.error(`❌ ${error.message}`);
+                core.setFailed(error.message);
+                return;
+            }
+            if (stderr) {
+                core.error(stderr);
+            }
+            core.info(`🚀 DuckDB ${selectedVersion} unzipped.`);
+        });
 
-        exec(`${wgetCmd} && ${unzipCmd} && ${installCmd} && ${cleanupCmd} && ${checkVersionCmd}`, (error, stdout, stderr) => {
+        exec (`${installCmd}`, (error, stdout, stderr) => {
+            if (error) {
+                core.error(`❌ ${error.message}`);
+                core.setFailed(error.message);
+                return;
+            }
+            if (stderr) {
+                core.error(stderr);
+            }
+            core.info(`🚀 DuckDB ${selectedVersion} installed.`);
+        });
+
+        exec (`${cleanupCmd}`, (error, stdout, stderr) => {
+            if (error) {
+                core.error(`❌ ${error.message}`);
+                core.setFailed(error.message);
+                return;
+            }
+            if (stderr) {
+                core.error(stderr);
+            }
+            core.info(`🚀 Workdir cleaned up.`);
+        });
+
+        exec (`${checkVersionCmd}`, (error, stdout, stderr) => {
+            if (error) {
+                core.error(`❌ ${error.message}`);
+                core.setFailed(error.message);
+                return;
+            }
+            if (stderr) {
+                core.error(stderr);
+            }
+            core.info(`🚀 version checked.`);
+        });
+
+
+
+        /*exec(`${wgetCmd} && ${unzipCmd} && ${installCmd} && ${cleanupCmd} && ${checkVersionCmd}`, (error, stdout, stderr) => {
             if (error) {
                 core.error(`❌ ${error.message}`);
                 core.setFailed(error.message);
@@ -73,7 +122,7 @@ module.exports = async function () {
                 core.error(stderr);
             }
             core.info(`🚀 DuckDB ${selectedVersion} successfully installed.`);
-        });
+        });*/
     } catch (error) {
         core.setFailed(error.message);
     }
