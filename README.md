@@ -28,4 +28,6 @@ uses: opt-nc/setup-duckdb-action@v1.0.0
 ## 📑 Related resources
 
 - [🦆 Effortless Data Quality w/duckdb on GitHub ♾️ ](https://dev.to/optnc/effortless-data-quality-wduckdb-on-github-2mkb)
-- [📖 DuckDB in Action (MEAP)](https://www.manning.com/books/duckdb-in-action) 
+- [📖 DuckDB in Action (MEAP)](https://www.manning.com/books/duckdb-in-action)
+- [😎 Awesome DuckDB](https://github.com/davidgasquez/awesome-duckdb)
+- [🛡️ Maintain version at github organization level](https://www.youtube.com/watch?v=cXzkAHPipNw)
