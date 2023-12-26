@@ -2,7 +2,7 @@ name: Dependabot post-update
 on:
   pull_request_target:
     types: [opened, synchronize, reopened]
-    branches: main
+    branches: develop
     
 concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number }}
