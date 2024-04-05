@@ -31,3 +31,4 @@ uses: opt-nc/setup-duckdb-action@v1.0.7
 - [📖 DuckDB in Action (MEAP)](https://www.manning.com/books/duckdb-in-action)
 - [😎 Awesome DuckDB](https://github.com/davidgasquez/awesome-duckdb)
 - [🛡️ Maintain version at github organization level](https://www.youtube.com/watch?v=cXzkAHPipNw)
+- [🪄 DuckDB sql hack : get things SORTED w/ constraint CHECK](https://dev.to/adriens/duckdb-sql-hack-get-things-sorted-w-constraint-check-46c)
