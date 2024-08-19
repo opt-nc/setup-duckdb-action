@@ -28,11 +28,11 @@ jobs:
       - name: 📦 Semantic Release
         if: github.ref == 'refs/heads/main'
         id: release
-        uses: cycjimmy/semantic-release-action@v4.1.0
+        uses: cycjimmy/semantic-release-action@v4
         with:
           extra_plugins: |
             @semantic-release/exec
             @semantic-release/git
-            conventional-changelog-conventionalcommits
+            conventional-changelog-conventionalcommits@7.0.2
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
