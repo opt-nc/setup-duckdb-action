@@ -1,10 +1,10 @@
 # 🚀 Marche à suivre pour maintenir la repo
 
-Dès que possible, lors de l'apparition des PR de dependabot, nous devons mettre à jour la Github Action des deux repos 
-"setup-duckdb-action" et "setup-duckdb-action-tester" avec une attention particulière pour "setup-duckdb-action".  
-La seconde repo sert uniquement à tester la première.
-La Github action va permettre d'installer facilement une version donnée de DuckDB et de basculer facilement vers une nouvelle.  
-`DuckDB` est un SGBDR rarement mis à jour, mais les mises à jour incluent généralement des fonctionnalités importantes.
+Dès que possible, lors de l'apparition des PRs de Dependabot, nous devons mettre à jour la GitHub Action des deux dépôts  
+`setup-duckdb-action` et `setup-duckdb-action-tester`, en accordant une attention particulière à `setup-duckdb-action`.
+Le second dépôt sert uniquement à tester le premier. La GitHub Action permet d'installer facilement une version donnée  
+de DuckDB et de basculer vers une nouvelle version en toute simplicité.
+DuckDB est un SGBDR rarement mis à jour, mais les mises à jour incluent généralement des fonctionnalités importantes.
 
 ## 📚 Documentation - Gestion des PRs et Automatisation
 
@@ -17,16 +17,16 @@ Dependabot est un outil qui aide à automatiser la mise à jour des dépendances
 
 2. **Gestion des mises à jour :**
     - Si la branche **n'a pas besoin d'être mise à jour**, vous pouvez procéder au merge en utilisant `rebase and merge`
-    - Si la branche **requiert une mise à jour sans conflit**, on met la branche à jour de la manière suivante : 
-      - Commenter la PR avec la commande : `@dependabot rebase`
-      - Dependabot ajoutera un :+1: à votre commentaire.
-      - Attendre que Dependabot réponde en mettant à la jour la Pull Request, puis merger la PR avec `rebase and merge`
-    - Si **une mise à jour est nécessaire et présente des conflits**, nous devons recréer la PR en suivant ces étapes :
-      - Commenter la Pull Request avec la commande `@dependabot recreate`
-      - Attendre le retour de dependabot
-      - Parfois, dependabot ne répond pas après son appel via commentaire, dans ce cas, remettre un commentaire `@dependabot recreate`
+    - Si la branche **requiert une mise à jour sans conflit**, suivez ces étapes : 
+      - Commentez la PR avec la commande : `@dependabot rebase`
+      - Dependabot ajoutera un 👍 à votre commentaire.
+      - Attendez que Dependabot réponde en mettant à la jour la Pull Request, puis mergez la PR avec `rebase and merge`
+    - Si **une mise à jour est nécessaire et présente des conflits**, recréez la PR en suivant ces étapes :
+      - Commentez la Pull Request avec la commande `@dependabot recreate`
+      - Attendez que dependabot réponde
+      - Si Dependabot ne répond pas après l'appel via commentaire, commentez de nouveau avec `@dependabot recreate`
         pour forcer la création d'une nouvelle PR.
-      - Une fois la PR recréée, la merger avec `rebase and merge`
+      - Une fois la PR recréée, mergez-la avec `rebase and merge`
 
 ### 🔐 CodeQL
 
