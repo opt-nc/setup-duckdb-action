@@ -36,10 +36,9 @@ CodeQL est un outil de sécurité qui analyse le code pour identifier des vulné
 
 ### 🏷️ Release Process
 
-Une fois toutes les PRs fusionnées dans `develop`, suivez ces étapes pour créer une release :
-
-1. Créez une PR de `develop` vers `main`.
-2. Poussez cette PR sans mettre à jour la branche. L'objectif est de faire un merge and commit directement.
+Une fois toutes les PRs fusionnées dans `develop`, merger `develop` dans `main`.  
+Le process de création de release se lance automatiquement. Il est possible de le suivre en allant dans l'onglet Action et  
+cliquer sur le run en cours. Si le run se termine en erreur, vérifier les logs. En fonction, une simple relance peut rêgler le souci.
 
 ### ⚙️ GitHub Actions
 
