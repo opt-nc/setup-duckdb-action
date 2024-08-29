@@ -29,7 +29,7 @@ Celles créées d'une branche features vers main sont plus compliquées à gére
         pour forcer la création d'une nouvelle PR.
       - Une fois la PR recréée, mergez-la avec `rebase and merge`.
     - Si **Dependabot remarque qu'une dépendance a été upgradée par un mainteneur**, il refuse la montée de version et clôture la PR :
-      - Si, en discutant avec l'UO qui maintient l'application, la version ne doit pas être montée, ne rien faire.
+      - Si, en discutant avec un membre de l'équipe (Michele Barre ou Adrien Sales), la version ne doit pas être montée, ne rien faire.
       - Sinon, relancez la PR avec un `@Dependabot recreate` et mergez la en respectant les consignes vues précédemment.  
 
 :warning: Il se peut que deux PR de Dependabot coexistent pour monter de version la même dépendance : 
