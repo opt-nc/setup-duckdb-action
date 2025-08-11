@@ -9,7 +9,7 @@ const { exec } = __nccwpck_require__(5317);
 const axios = __nccwpck_require__(7269);
 
 const maxAttempts = 3; // Maximum number of attempts for retries
-const waitingTime = 1000; // Initial waiting time in milliseconds
+const waitingTime = 5000; // Initial waiting time in milliseconds
 
 
 module.exports = async function () {
@@ -25,7 +25,7 @@ module.exports = async function () {
         let attempt = 1;
         let success = false;
         core.info(`🔁 Attempting to get the latest DuckDB version (max attempts: ${maxAttempts})`);
-        while (attempt < maxAttempts && !success) {
+        while (attempt <= maxAttempts && !success) {
             core.info(`🔁 Attempt ${attempt}/${maxAttempts} to get the latest DuckDB version...`);
             try {
                 core.info(`🔍 Attempting to fetch latest DuckDB version from GitHub API...`);
