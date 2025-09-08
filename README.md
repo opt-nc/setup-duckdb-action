@@ -32,3 +32,4 @@ uses: opt-nc/setup-duckdb-action@v1.0.14
 - [😎 Awesome DuckDB](https://github.com/davidgasquez/awesome-duckdb)
 - [🛡️ Maintain version at github organization level](https://www.youtube.com/watch?v=cXzkAHPipNw)
 - [🪄 DuckDB sql hack : get things SORTED w/ constraint CHECK](https://dev.to/adriens/duckdb-sql-hack-get-things-sorted-w-constraint-check-46c)
+- [🛡️ Data quality, SQL, duckdb and http_client on CI 🦆](https://dev.to/adriens/data-quality-sql-duckdb-and-httpclient-on-ci-22)
