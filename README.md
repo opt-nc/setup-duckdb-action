@@ -16,13 +16,13 @@ This action installs [`duckdb`](https://github.com/duckdb/duckdb) with the versi
 ## 🚀 Example usage
 
 ```yaml
-uses: opt-nc/setup-duckdb-action@v1.1.4
+uses: opt-nc/setup-duckdb-action@v1.2.0
 with:
-  version: v1.4.2
+  version: v1.4.3
 ```
 
 ```yaml
-uses: opt-nc/setup-duckdb-action@v1.1.4
+uses: opt-nc/setup-duckdb-action@v1.2.0
 ```
 
 ## 📑 Related resources
