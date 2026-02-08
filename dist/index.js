@@ -2953,7 +2953,6 @@ function getIDToken(aud) {
 //# sourceMappingURL=core.js.map
 ;// CONCATENATED MODULE: ./lib.js
 /* module decorator */ module = __nccwpck_require__.hmd(module);
-//const core = require('@actions/core');
 
 const { exec: lib_exec } = __nccwpck_require__(5317);
 const axios = __nccwpck_require__(7269);
