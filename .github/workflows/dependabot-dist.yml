@@ -2,7 +2,7 @@ name: Dependabot post-update
 on:
   pull_request_target:
     types: [opened, synchronize, reopened]
-    branches: develop
+    branches: [develop]
     
 concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number }}
@@ -24,7 +24,7 @@ jobs:
 
       - uses: actions/setup-node@v6
         with:
-          node-version: '16'
+          node-version: '24'
           cache: 'npm'
 
       - run: npm install --frozen-lockfile

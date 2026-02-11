@@ -3,17 +3,20 @@
   "description": "GitHub action that installs DuckDB with the version provided in input.",
   "main": "index.js",
   "scripts": {
+    "build": "tsc",
     "lint": "eslint .",
-    "prepare": "ncc build index.js -o dist --source-map --license licenses.txt",
+    "prepare": "npm run build && ncc build build/index.js -o dist --source-map --license licenses.txt",
     "test": "echo \"Warning: no test implemented\"",
     "all": "npm run lint && npm run prepare"
   },
   "dependencies": {
-    "@actions/core": "^2.0.0",
-    "axios": "^1.13.2"
+    "@actions/core": "^3.0.0",
+    "axios": "^1.13.5"
   },
   "devDependencies": {
+    "@types/node": "^25.2.3",
     "@vercel/ncc": "^0.38.4",
-    "eslint": "^9.39.1"
+    "eslint": "^10.0.0",
+    "typescript": "^5.9.3"
   }
 }
