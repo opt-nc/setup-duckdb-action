@@ -1,9 +1,9 @@
 import * as core from '@actions/core';
-import { exec } from 'node:child_process';
+import { execFile } from 'node:child_process';
 import { promisify } from 'node:util';
 import axios, { AxiosResponse } from 'axios';
 
-const execAsync = promisify(exec);
+const execFileAsync = promisify(execFile);
 
 const MAX_ATTEMPTS = 3;
 const WAITING_TIME_MS = 5000;
@@ -71,22 +71,35 @@ function validateVersion(version: string): void {
 async function installDuckDB(version: string): Promise<void> {
     core.info(`📥 Installing DuckDB version: ${version}`);
     
-    const url = `https://github.com/duckdb/duckdb/releases/download/${version}/duckdb_cli-linux-amd64.zip`;
-    const commands = [
-        `wget ${url}`,
-        'unzip duckdb_cli-linux-amd64.zip',
-        'mkdir -p /opt/duckdb && mv duckdb /opt/duckdb && chmod +x /opt/duckdb/duckdb',
-        'sudo ln -s /opt/duckdb/duckdb /usr/bin/duckdb',
-        'rm duckdb_cli-linux-amd64.zip',
-        'duckdb --version'
-    ].join(' && ');
+    const zipFile = 'duckdb_cli-linux-amd64.zip';
+    const url = `https://github.com/duckdb/duckdb/releases/download/${version}/${zipFile}`;
 
     try {
-        const { stdout, stderr } = await execAsync(commands);
+        // Download DuckDB CLI zip file
+        core.info('⬇️ Downloading DuckDB CLI...');
+        await execFileAsync('wget', [url]);
         
-        if (stderr) {
-            core.debug(stderr);
-        }
+        // Unzip the downloaded file
+        core.info('📦 Extracting DuckDB CLI...');
+        await execFileAsync('unzip', [zipFile]);
+        
+        // Create directory and move binary
+        core.info('📂 Setting up DuckDB installation...');
+        await execFileAsync('mkdir', ['-p', '/opt/duckdb']);
+        await execFileAsync('mv', ['duckdb', '/opt/duckdb']);
+        await execFileAsync('chmod', ['+x', '/opt/duckdb/duckdb']);
+        
+        // Create symlink (requires sudo)
+        core.info('🔗 Creating symlink...');
+        await execFileAsync('sudo', ['ln', '-s', '/opt/duckdb/duckdb', '/usr/bin/duckdb']);
+        
+        // Clean up zip file
+        core.info('🧹 Cleaning up...');
+        await execFileAsync('rm', [zipFile]);
+        
+        // Verify installation
+        core.info('✅ Verifying installation...');
+        const { stdout } = await execFileAsync('duckdb', ['--version']);
         
         core.info(`✔️ DuckDB ${version} successfully installed.`);
         core.info(stdout.trim());
