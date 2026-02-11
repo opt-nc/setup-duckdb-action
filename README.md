@@ -3,15 +3,15 @@
 [![🚀 Release](https://github.com/opt-nc/setup-duckdb-action/actions/workflows/release.yml/badge.svg)](https://github.com/opt-nc/setup-duckdb-action/actions/workflows/release.yml)
 
 
-# ℹ️ Setup Duckdb Action
+# ℹ️ Setup DuckDB Action
 
-This action installs [`duckdb`](https://github.com/duckdb/duckdb) with the version provided in input.
+This action installs [`duckdb`](https://github.com/duckdb/duckdb) with the version provided as input.
 
 ## 📜 Inputs
 
 ### `version`
 
-**Not Required** The version you want to install. If no version defined, the latest version will be installed.
+**Not Required** The version you want to install. If no version is defined, the latest version will be installed.
 
 ## 🚀 Example usage
 
