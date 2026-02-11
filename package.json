@@ -1,6 +1,6 @@
 {
   "name": "setup-duckdb-action",
-  "description": "Github action that installs DuckDB with the version provided in input.",
+  "description": "GitHub action that installs DuckDB with the version provided in input.",
   "main": "index.js",
   "scripts": {
     "build": "tsc",
