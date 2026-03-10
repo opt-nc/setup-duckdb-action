@@ -11,12 +11,12 @@
   },
   "dependencies": {
     "@actions/core": "^3.0.0",
-    "axios": "^1.13.5"
+    "axios": "^1.13.6"
   },
   "devDependencies": {
-    "@types/node": "^25.2.3",
+    "@types/node": "^25.4.0",
     "@vercel/ncc": "^0.38.4",
-    "eslint": "^10.0.0",
+    "eslint": "^10.0.3",
     "typescript": "^5.9.3"
   }
 }
