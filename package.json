@@ -11,7 +11,7 @@
   },
   "dependencies": {
     "@actions/core": "^3.0.0",
-    "axios": "^1.14.0"
+    "axios": "^1.15.0"
   },
   "devDependencies": {
     "@types/node": "^25.6.0",
