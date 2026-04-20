@@ -10,4 +10,4 @@ inputs:
     default: 'latest'
 runs:
   using: 'node24'
-  main: 'dist/index.ts'
+  main: 'dist/index.js'
