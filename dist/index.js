@@ -5612,7 +5612,7 @@ var follow_redirects = __nccwpck_require__(1573);
 ;// CONCATENATED MODULE: external "zlib"
 const external_zlib_namespaceObject = require("zlib");
 ;// CONCATENATED MODULE: ./node_modules/axios/lib/env/data.js
-const VERSION = "1.15.1";
+const VERSION = "1.15.2";
 ;// CONCATENATED MODULE: ./node_modules/axios/lib/helpers/parseProtocol.js
 
 
@@ -6441,6 +6441,7 @@ function estimateDataURLDecodedBytes(url) {
 
 
 
+
 const zlibOptions = {
   flush: external_zlib_namespaceObject.constants.Z_SYNC_FLUSH,
   finishFlush: external_zlib_namespaceObject.constants.Z_SYNC_FLUSH,
@@ -6456,6 +6457,11 @@ const isBrotliSupported = utils.isFunction(external_zlib_namespaceObject.createB
 const { http: httpFollow, https: httpsFollow } = follow_redirects;
 
 const http_isHttps = /https:?/;
+
+// Symbols used to bind a single 'error' listener to a pooled socket and track
+// the request currently owning that socket across keep-alive reuse (issue #10780).
+const kAxiosSocketListener = Symbol('axios.http.socketListener');
+const kAxiosCurrentReq = Symbol('axios.http.currentReq');
 
 const supportedProtocols = lib_platform.protocols.map((protocol) => {
   return protocol + ':';
@@ -7024,9 +7030,10 @@ const http2Transport = {
 
       // HTTP basic authentication
       let auth = undefined;
-      if (config.auth) {
-        const username = config.auth.username || '';
-        const password = config.auth.password || '';
+      const configAuth = own('auth');
+      if (configAuth) {
+        const username = configAuth.username || '';
+        const password = configAuth.password || '';
         auth = username + ':' + password;
       }
 
@@ -7060,7 +7067,10 @@ const http2Transport = {
         false
       );
 
-      const options = {
+      // Null-prototype to block prototype pollution gadgets on properties read
+      // directly by Node's http.request (e.g. insecureHTTPParser, lookup).
+      // See GHSA-q8qp-cvcw-x6jj.
+      const options = Object.assign(Object.create(null), {
         path,
         method: method,
         headers: headers.toJSON(),
@@ -7069,14 +7079,41 @@ const http2Transport = {
         protocol,
         family,
         beforeRedirect: dispatchBeforeRedirect,
-        beforeRedirects: {},
+        beforeRedirects: Object.create(null),
         http2Options,
-      };
+      });
 
       // cacheable-lookup integration hotfix
       !utils.isUndefined(lookup) && (options.lookup = lookup);
 
       if (config.socketPath) {
+        if (typeof config.socketPath !== 'string') {
+          return reject(new core_AxiosError(
+            'socketPath must be a string',
+            core_AxiosError.ERR_BAD_OPTION_VALUE,
+            config
+          ));
+        }
+
+        if (config.allowedSocketPaths != null) {
+          const allowed = Array.isArray(config.allowedSocketPaths)
+            ? config.allowedSocketPaths
+            : [config.allowedSocketPaths];
+
+          const resolvedSocket = (0,external_path_.resolve)(config.socketPath);
+          const isAllowed = allowed.some(
+            (entry) => typeof entry === 'string' && (0,external_path_.resolve)(entry) === resolvedSocket
+          );
+
+          if (!isAllowed) {
+            return reject(new core_AxiosError(
+              `socketPath "${config.socketPath}" is not permitted by allowedSocketPaths`,
+              core_AxiosError.ERR_BAD_OPTION_VALUE,
+              config
+            ));
+          }
+        }
+
         options.socketPath = config.socketPath;
       } else {
         options.hostname = parsed.hostname.startsWith('[')
@@ -7105,8 +7142,9 @@ const http2Transport = {
           if (config.maxRedirects) {
             options.maxRedirects = config.maxRedirects;
           }
-          if (config.beforeRedirect) {
-            options.beforeRedirects.config = config.beforeRedirect;
+          const configBeforeRedirect = own('beforeRedirect');
+          if (configBeforeRedirect) {
+            options.beforeRedirects.config = configBeforeRedirect;
           }
           transport = isHttpsRequest ? httpsFollow : httpFollow;
         }
@@ -7119,9 +7157,10 @@ const http2Transport = {
         options.maxBodyLength = Infinity;
       }
 
-      if (config.insecureHTTPParser) {
-        options.insecureHTTPParser = config.insecureHTTPParser;
-      }
+      // Always set an explicit own value so a polluted
+      // Object.prototype.insecureHTTPParser cannot enable the lenient parser
+      // through Node's internal options copy (GHSA-q8qp-cvcw-x6jj).
+      options.insecureHTTPParser = Boolean(own('insecureHTTPParser'));
 
       // Create the request
       req = transport.request(options, function handleResponse(res) {
@@ -7319,20 +7358,28 @@ const http2Transport = {
         // default interval of sending ack packet is 1 minute
         socket.setKeepAlive(true, 1000 * 60);
 
-        const removeSocketErrorListener = () => {
-          socket.removeListener('error', handleRequestSocketError);
-        };
-
-        function handleRequestSocketError(err) {
-          removeSocketErrorListener();
-
-          if (!req.destroyed) {
-            req.destroy(err);
-          }
+        // Install a single 'error' listener per socket (not per request) to avoid
+        // accumulating listeners on pooled keep-alive sockets that get reassigned
+        // to new requests before the previous request's 'close' fires (issue #10780).
+        // The listener is bound to the socket's currently-active request via a
+        // symbol, which is swapped as the socket is reassigned.
+        if (!socket[kAxiosSocketListener]) {
+          socket.on('error', function handleSocketError(err) {
+            const current = socket[kAxiosCurrentReq];
+            if (current && !current.destroyed) {
+              current.destroy(err);
+            }
+          });
+          socket[kAxiosSocketListener] = true;
         }
 
-        socket.on('error', handleRequestSocketError);
-        req.once('close', removeSocketErrorListener);
+        socket[kAxiosCurrentReq] = req;
+
+        req.once('close', function clearCurrentReq() {
+          if (socket[kAxiosCurrentReq] === req) {
+            socket[kAxiosCurrentReq] = null;
+          }
+        });
       });
 
       // Handle request timeout
@@ -7533,7 +7580,18 @@ const headersToObject = (thing) => (thing instanceof core_AxiosHeaders ? { ...th
 function mergeConfig(config1, config2) {
   // eslint-disable-next-line no-param-reassign
   config2 = config2 || {};
-  const config = {};
+
+  // Use a null-prototype object so that downstream reads such as `config.auth`
+  // or `config.baseURL` cannot inherit polluted values from Object.prototype
+  // (see GHSA-q8qp-cvcw-x6jj). `hasOwnProperty` is restored as a non-enumerable
+  // own slot to preserve ergonomics for user code that relies on it.
+  const config = Object.create(null);
+  Object.defineProperty(config, 'hasOwnProperty', {
+    value: Object.prototype.hasOwnProperty,
+    enumerable: false,
+    writable: true,
+    configurable: true,
+  });
 
   function getMergedValue(target, source, prop, caseless) {
     if (utils.isPlainObject(target) && utils.isPlainObject(source)) {
@@ -7606,6 +7664,7 @@ function mergeConfig(config1, config2) {
     httpsAgent: defaultToConfig2,
     cancelToken: defaultToConfig2,
     socketPath: defaultToConfig2,
+    allowedSocketPaths: defaultToConfig2,
     responseEncoding: defaultToConfig2,
     validateStatus: mergeDirectKeys,
     headers: (a, b, prop) =>
@@ -7637,12 +7696,24 @@ function mergeConfig(config1, config2) {
 /* harmony default export */ const resolveConfig = ((config) => {
   const newConfig = mergeConfig({}, config);
 
-  let { data, withXSRFToken, xsrfHeaderName, xsrfCookieName, headers, auth } = newConfig;
+  // Read only own properties to prevent prototype pollution gadgets
+  // (e.g. Object.prototype.baseURL = 'https://evil.com'). See GHSA-q8qp-cvcw-x6jj.
+  const own = (key) => (utils.hasOwnProp(newConfig, key) ? newConfig[key] : undefined);
+
+  const data = own('data');
+  let withXSRFToken = own('withXSRFToken');
+  const xsrfHeaderName = own('xsrfHeaderName');
+  const xsrfCookieName = own('xsrfCookieName');
+  let headers = own('headers');
+  const auth = own('auth');
+  const baseURL = own('baseURL');
+  const allowAbsoluteUrls = own('allowAbsoluteUrls');
+  const url = own('url');
 
   newConfig.headers = headers = core_AxiosHeaders.from(headers);
 
   newConfig.url = buildURL(
-    buildFullPath(newConfig.baseURL, newConfig.url, newConfig.allowAbsoluteUrls),
+    buildFullPath(baseURL, url, allowAbsoluteUrls),
     config.params,
     config.paramsSerializer
   );
@@ -8728,7 +8799,9 @@ function assertOptions(options, schema, allowUnknown) {
   let i = keys.length;
   while (i-- > 0) {
     const opt = keys[i];
-    const validator = schema[opt];
+    // Use hasOwnProperty so a polluted Object.prototype.<opt> cannot supply
+    // a non-function validator and cause a TypeError. See GHSA-q8qp-cvcw-x6jj.
+    const validator = Object.prototype.hasOwnProperty.call(schema, opt) ? schema[opt] : undefined;
     if (validator) {
       const value = options[opt];
       const result = value === undefined || validator(value, opt, options);
