@@ -7,7 +7,7 @@ require('./sourcemap-register.js');/******/ (() => { // webpackBootstrap
 "use strict";
 __nccwpck_require__.a(module, async (__webpack_handle_async_dependencies__, __webpack_async_result__) => { try {
 __nccwpck_require__.r(__webpack_exports__);
-/* harmony import */ var _lib__WEBPACK_IMPORTED_MODULE_0__ = __nccwpck_require__(4168);
+/* harmony import */ var _lib__WEBPACK_IMPORTED_MODULE_0__ = __nccwpck_require__(7526);
 
 await (0,_lib__WEBPACK_IMPORTED_MODULE_0__/* ["default"] */ .A)();
 
@@ -16,7 +16,7 @@ __webpack_async_result__();
 
 /***/ }),
 
-/***/ 4168:
+/***/ 7526:
 /***/ ((__unused_webpack_module, __webpack_exports__, __nccwpck_require__) => {
 
 "use strict";
@@ -3417,7 +3417,9 @@ function merge(...objs) {
       return;
     }
 
-    const targetKey = (caseless && findKey(result, key)) || key;
+    // findKey lowercases the key, so caseless lookup only applies to strings —
+    // symbol keys are identity-matched.
+    const targetKey = (caseless && typeof key === 'string' && findKey(result, key)) || key;
     // Read via own-prop only — a bare `result[targetKey]` walks the prototype
     // chain, so a polluted Object.prototype value could surface here and get
     // copied into the merged result.
@@ -3434,7 +3436,24 @@ function merge(...objs) {
   };
 
   for (let i = 0, l = objs.length; i < l; i++) {
-    objs[i] && forEach(objs[i], assignValue);
+    const source = objs[i];
+    if (!source || isBuffer(source)) {
+      continue;
+    }
+
+    forEach(source, assignValue);
+
+    if (typeof source !== 'object' || isArray(source)) {
+      continue;
+    }
+
+    const symbols = Object.getOwnPropertySymbols(source);
+    for (let j = 0; j < symbols.length; j++) {
+      const symbol = symbols[j];
+      if (propertyIsEnumerable.call(source, symbol)) {
+        assignValue(source[symbol], symbol);
+      }
+    }
   }
   return result;
 }
@@ -3662,6 +3681,8 @@ const utils_hasOwnProperty = (
   (obj, prop) =>
     hasOwnProperty.call(obj, prop)
 )(Object.prototype);
+
+const { propertyIsEnumerable } = Object.prototype;
 
 /**
  * Determine if a value is a RegExp object
@@ -4161,7 +4182,7 @@ class AxiosHeaders {
       const lHeader = normalizeHeader(_header);
 
       if (!lHeader) {
-        throw new Error('header name must be a non-empty string');
+        return;
       }
 
       const key = utils.findKey(self, lHeader);
@@ -4189,7 +4210,7 @@ class AxiosHeaders {
         key;
       for (const entry of header) {
         if (!utils.isArray(entry)) {
-          throw TypeError('Object iterator must return a key-value pair');
+          throw new TypeError('Object iterator must return a key-value pair');
         }
 
         obj[(key = entry[0])] = (dest = obj[key])
@@ -4826,7 +4847,7 @@ function toFormData(obj, formData, options) {
     }
 
     if (stack.indexOf(value) !== -1) {
-      throw Error('Circular reference detected in ' + path.join('.'));
+      throw new Error('Circular reference detected in ' + path.join('.'));
     }
 
     stack.push(value);
@@ -5068,6 +5089,7 @@ class InterceptorManager {
   forcedJSONParsing: true,
   clarifyTimeoutError: false,
   legacyInterceptorReqResOrdering: true,
+  advertiseZstdAcceptEncoding: false,
 });
 
 // EXTERNAL MODULE: external "url"
@@ -5741,7 +5763,7 @@ var follow_redirects = __nccwpck_require__(1573);
 ;// CONCATENATED MODULE: external "zlib"
 const external_zlib_namespaceObject = require("zlib");
 ;// CONCATENATED MODULE: ./node_modules/axios/lib/env/data.js
-const VERSION = "1.16.1";
+const VERSION = "1.17.0";
 ;// CONCATENATED MODULE: ./node_modules/axios/lib/helpers/parseProtocol.js
 
 
@@ -6071,11 +6093,11 @@ const formDataToStream = (form, headersHandler, options) => {
   } = options || {};
 
   if (!utils.isFormData(form)) {
-    throw TypeError('FormData instance required');
+    throw new TypeError('FormData instance required');
   }
 
   if (boundary.length < 1 || boundary.length > 70) {
-    throw Error('boundary must be 1-70 characters long');
+    throw new Error('boundary must be 1-70 characters long');
   }
 
   const boundaryBytes = textEncoder.encode('--' + boundary + CRLF);
@@ -6146,6 +6168,127 @@ class ZlibHeaderTransformStream extends external_stream_.Transform {
 }
 
 /* harmony default export */ const helpers_ZlibHeaderTransformStream = (ZlibHeaderTransformStream);
+
+;// CONCATENATED MODULE: ./node_modules/axios/lib/helpers/Http2Sessions.js
+
+
+// Node-only: relies on the built-in `http2` module. Browser/react-native
+// builds replace `lib/adapters/http.js` (the sole importer) with `lib/helpers/null.js`
+// via the `browser` package.json field, so this module is never reached in
+// those environments. Do not import it from any browser-reachable code path.
+
+
+
+
+class Http2Sessions {
+  constructor() {
+    this.sessions = Object.create(null);
+  }
+
+  getSession(authority, options) {
+    options = Object.assign(
+      {
+        sessionTimeout: 1000,
+      },
+      options
+    );
+
+    let authoritySessions = this.sessions[authority];
+
+    if (authoritySessions) {
+      let len = authoritySessions.length;
+
+      for (let i = 0; i < len; i++) {
+        const [sessionHandle, sessionOptions] = authoritySessions[i];
+        if (
+          !sessionHandle.destroyed &&
+          !sessionHandle.closed &&
+          external_util_.isDeepStrictEqual(sessionOptions, options)
+        ) {
+          return sessionHandle;
+        }
+      }
+    }
+
+    const session = external_http2_namespaceObject.connect(authority, options);
+
+    let removed;
+    let timer;
+
+    const removeSession = () => {
+      if (removed) {
+        return;
+      }
+
+      removed = true;
+
+      if (timer) {
+        clearTimeout(timer);
+        timer = null;
+      }
+
+      let entries = authoritySessions,
+        len = entries.length,
+        i = len;
+
+      while (i--) {
+        if (entries[i][0] === session) {
+          if (len === 1) {
+            delete this.sessions[authority];
+          } else {
+            entries.splice(i, 1);
+          }
+          if (!session.closed) {
+            session.close();
+          }
+          return;
+        }
+      }
+    };
+
+    const originalRequestFn = session.request;
+
+    const { sessionTimeout } = options;
+
+    if (sessionTimeout != null) {
+      let streamsCount = 0;
+
+      session.request = function () {
+        const stream = originalRequestFn.apply(this, arguments);
+
+        streamsCount++;
+
+        if (timer) {
+          clearTimeout(timer);
+          timer = null;
+        }
+
+        stream.once('close', () => {
+          if (!--streamsCount) {
+            timer = setTimeout(() => {
+              timer = null;
+              removeSession();
+            }, sessionTimeout);
+          }
+        });
+
+        return stream;
+      };
+    }
+
+    session.once('close', removeSession);
+
+    let entry = [session, options];
+
+    authoritySessions
+      ? authoritySessions.push(entry)
+      : (authoritySessions = this.sessions[authority] = [entry]);
+
+    return session;
+  }
+}
+
+/* harmony default export */ const helpers_Http2Sessions = (Http2Sessions);
 
 ;// CONCATENATED MODULE: ./node_modules/axios/lib/helpers/callbackify.js
 
@@ -6641,6 +6784,7 @@ function estimateDataURLDecodedBytes(url) {
 
 
 
+
 const zlibOptions = {
   flush: external_zlib_namespaceObject.constants.Z_SYNC_FLUSH,
   finishFlush: external_zlib_namespaceObject.constants.Z_SYNC_FLUSH,
@@ -6651,7 +6795,15 @@ const brotliOptions = {
   finishFlush: external_zlib_namespaceObject.constants.BROTLI_OPERATION_FLUSH,
 };
 
+const zstdOptions = {
+  flush: external_zlib_namespaceObject.constants.ZSTD_e_flush,
+  finishFlush: external_zlib_namespaceObject.constants.ZSTD_e_flush,
+};
+
 const isBrotliSupported = utils.isFunction(external_zlib_namespaceObject.createBrotliDecompress);
+const isZstdSupported = utils.isFunction(external_zlib_namespaceObject.createZstdDecompress);
+const ACCEPT_ENCODING = 'gzip, compress, deflate' + (isBrotliSupported ? ', br' : '');
+const ACCEPT_ENCODING_WITH_ZSTD = ACCEPT_ENCODING + (isZstdSupported ? ', zstd' : '');
 
 const { http: httpFollow, https: httpsFollow } = follow_redirects;
 
@@ -6710,6 +6862,14 @@ function getTunnelingAgent(agentOptions, userHttpsAgent) {
     ? { ...userHttpsAgent.options, ...agentOptions }
     : agentOptions;
   agent = new dist(merged);
+  if (userHttpsAgent && userHttpsAgent.options) {
+    const originTLSOptions = { ...userHttpsAgent.options };
+    const callback = agent.callback;
+    agent.callback = function axiosTunnelingAgentCallback(req, opts) {
+      // HttpsProxyAgent v5 reads callback opts for the post-CONNECT origin TLS upgrade.
+      return callback.call(this, req, { ...originTLSOptions, ...opts });
+    };
+  }
   agent[kAxiosInstalledTunnel] = true;
   cache.set(key, agent);
   return agent;
@@ -6741,114 +6901,11 @@ const flushOnFinish = (stream, [throttled, flush]) => {
   return throttled;
 };
 
-class Http2Sessions {
-  constructor() {
-    this.sessions = Object.create(null);
-  }
-
-  getSession(authority, options) {
-    options = Object.assign(
-      {
-        sessionTimeout: 1000,
-      },
-      options
-    );
-
-    let authoritySessions = this.sessions[authority];
-
-    if (authoritySessions) {
-      let len = authoritySessions.length;
-
-      for (let i = 0; i < len; i++) {
-        const [sessionHandle, sessionOptions] = authoritySessions[i];
-        if (
-          !sessionHandle.destroyed &&
-          !sessionHandle.closed &&
-          external_util_.isDeepStrictEqual(sessionOptions, options)
-        ) {
-          return sessionHandle;
-        }
-      }
-    }
-
-    const session = external_http2_namespaceObject.connect(authority, options);
-
-    let removed;
-
-    const removeSession = () => {
-      if (removed) {
-        return;
-      }
-
-      removed = true;
-
-      let entries = authoritySessions,
-        len = entries.length,
-        i = len;
-
-      while (i--) {
-        if (entries[i][0] === session) {
-          if (len === 1) {
-            delete this.sessions[authority];
-          } else {
-            entries.splice(i, 1);
-          }
-          if (!session.closed) {
-            session.close();
-          }
-          return;
-        }
-      }
-    };
-
-    const originalRequestFn = session.request;
-
-    const { sessionTimeout } = options;
-
-    if (sessionTimeout != null) {
-      let timer;
-      let streamsCount = 0;
-
-      session.request = function () {
-        const stream = originalRequestFn.apply(this, arguments);
-
-        streamsCount++;
-
-        if (timer) {
-          clearTimeout(timer);
-          timer = null;
-        }
-
-        stream.once('close', () => {
-          if (!--streamsCount) {
-            timer = setTimeout(() => {
-              timer = null;
-              removeSession();
-            }, sessionTimeout);
-          }
-        });
-
-        return stream;
-      };
-    }
-
-    session.once('close', removeSession);
-
-    let entry = [session, options];
-
-    authoritySessions
-      ? authoritySessions.push(entry)
-      : (authoritySessions = this.sessions[authority] = [entry]);
-
-    return session;
-  }
-}
-
-const http2Sessions = new Http2Sessions();
+const http2Sessions = new helpers_Http2Sessions();
 
 /**
- * If the proxy or config beforeRedirects functions are defined, call them with the options
- * object.
+ * If the proxy, auth, or config beforeRedirects functions are defined, call them
+ * with the options object.
  *
  * @param {Object<string, any>} options - The options object that was passed to the request.
  *
@@ -6857,6 +6914,9 @@ const http2Sessions = new Http2Sessions();
 function dispatchBeforeRedirect(options, responseDetails, requestDetails) {
   if (options.beforeRedirects.proxy) {
     options.beforeRedirects.proxy(options);
+  }
+  if (options.beforeRedirects.auth) {
+    options.beforeRedirects.auth(options);
   }
   if (options.beforeRedirects.config) {
     options.beforeRedirects.config(options, responseDetails, requestDetails);
@@ -7125,6 +7185,7 @@ const http2Transport = {
   function httpAdapter(config) {
     return wrapAsync(async function dispatchHttpRequest(resolve, reject, onDone) {
       const own = (key) => (utils.hasOwnProp(config, key) ? config[key] : undefined);
+      const transitional = own('transitional') || defaults_transitional;
       let data = own('data');
       let lookup = own('lookup');
       let family = own('family');
@@ -7178,7 +7239,7 @@ const http2Transport = {
             !reason || reason.type ? new cancel_CanceledError(null, config, req) : reason
           );
         } catch (err) {
-          console.warn('emit error', err);
+          // ignore emit errors
         }
       }
 
@@ -7193,7 +7254,6 @@ const http2Transport = {
         let timeoutErrorMessage = config.timeout
           ? 'timeout of ' + config.timeout + 'ms exceeded'
           : 'timeout exceeded';
-        const transitional = config.transitional || defaults_transitional;
         if (config.timeoutErrorMessage) {
           timeoutErrorMessage = config.timeoutErrorMessage;
         }
@@ -7442,7 +7502,7 @@ const http2Transport = {
         auth = username + ':' + password;
       }
 
-      if (!auth && parsed.username) {
+      if (!auth && (parsed.username || parsed.password)) {
         const urlUsername = decodeURIComponentSafe(parsed.username);
         const urlPassword = decodeURIComponentSafe(parsed.password);
         auth = urlUsername + ':' + urlPassword;
@@ -7468,7 +7528,8 @@ const http2Transport = {
 
       headers.set(
         'Accept-Encoding',
-        'gzip, compress, deflate' + (isBrotliSupported ? ', br' : ''),
+        utils.hasOwnProp(transitional, 'advertiseZstdAcceptEncoding') &&
+        transitional.advertiseZstdAcceptEncoding === true ? ACCEPT_ENCODING_WITH_ZSTD : ACCEPT_ENCODING,
         false
       );
 
@@ -7490,19 +7551,21 @@ const http2Transport = {
       // cacheable-lookup integration hotfix
       !utils.isUndefined(lookup) && (options.lookup = lookup);
 
-      if (config.socketPath) {
-        if (typeof config.socketPath !== 'string') {
+      const socketPath = own('socketPath');
+      if (socketPath) {
+        if (typeof socketPath !== 'string') {
           return reject(
             new core_AxiosError('socketPath must be a string', core_AxiosError.ERR_BAD_OPTION_VALUE, config)
           );
         }
 
-        if (config.allowedSocketPaths != null) {
-          const allowed = Array.isArray(config.allowedSocketPaths)
-            ? config.allowedSocketPaths
-            : [config.allowedSocketPaths];
+        const allowedSocketPaths = own('allowedSocketPaths');
+        if (allowedSocketPaths != null) {
+          const allowed = Array.isArray(allowedSocketPaths)
+            ? allowedSocketPaths
+            : [allowedSocketPaths];
 
-          const resolvedSocket = (0,external_path_.resolve)(config.socketPath);
+          const resolvedSocket = (0,external_path_.resolve)(socketPath);
           const isAllowed = allowed.some(
             (entry) => typeof entry === 'string' && (0,external_path_.resolve)(entry) === resolvedSocket
           );
@@ -7510,7 +7573,7 @@ const http2Transport = {
           if (!isAllowed) {
             return reject(
               new core_AxiosError(
-                `socketPath "${config.socketPath}" is not permitted by allowedSocketPaths`,
+                `socketPath "${socketPath}" is not permitted by allowedSocketPaths`,
                 core_AxiosError.ERR_BAD_OPTION_VALUE,
                 config
               )
@@ -7518,7 +7581,7 @@ const http2Transport = {
           }
         }
 
-        options.socketPath = config.socketPath;
+        options.socketPath = socketPath;
       } else {
         options.hostname = parsed.hostname.startsWith('[')
           ? parsed.hostname.slice(1, -1)
@@ -7557,6 +7620,23 @@ const http2Transport = {
           const configBeforeRedirect = own('beforeRedirect');
           if (configBeforeRedirect) {
             options.beforeRedirects.config = configBeforeRedirect;
+          }
+          if (auth) {
+            // Restore HTTP Basic credentials on same-origin redirects only.
+            // follow-redirects >= 1.15.8 strips Authorization on every redirect (see #6929);
+            // cross-origin stripping is the documented mitigation for T-R2 in THREATMODEL.md
+            // and is preserved by deliberately not restoring on origin change.
+            const requestOrigin = parsed.origin;
+            const authToRestore = auth;
+            options.beforeRedirects.auth = function beforeRedirectAuth(redirectOptions) {
+              try {
+                if (new URL(redirectOptions.href).origin === requestOrigin) {
+                  redirectOptions.auth = authToRestore;
+                }
+              } catch (e) {
+                // ignore malformed URL: leaving auth stripped is fail-safe
+              }
+            };
           }
           transport = isHttpsRequest ? httpsFollow : httpFollow;
         }
@@ -7644,6 +7724,13 @@ const http2Transport = {
                 streams.push(external_zlib_namespaceObject.createBrotliDecompress(brotliOptions));
                 delete res.headers['content-encoding'];
               }
+              break;
+            case 'zstd':
+              if (isZstdSupported) {
+                streams.push(external_zlib_namespaceObject.createZstdDecompress(zstdOptions));
+                delete res.headers['content-encoding'];
+              }
+              break;
           }
         }
 
@@ -8162,7 +8249,7 @@ const encodeUTF8 = (str) =>
     String.fromCharCode(parseInt(hex, 16))
   );
 
-/* harmony default export */ const resolveConfig = ((config) => {
+function resolveConfig(config) {
   const newConfig = mergeConfig({}, config);
 
   // Read only own properties to prevent prototype pollution gadgets
@@ -8183,8 +8270,8 @@ const encodeUTF8 = (str) =>
 
   newConfig.url = buildURL(
     buildFullPath(baseURL, url, allowAbsoluteUrls),
-    config.params,
-    config.paramsSerializer
+    own('params'),
+    own('paramsSerializer')
   );
 
   // HTTP basic authentication
@@ -8197,8 +8284,12 @@ const encodeUTF8 = (str) =>
   }
 
   if (utils.isFormData(data)) {
-    if (lib_platform.hasStandardBrowserEnv || lib_platform.hasStandardBrowserWebWorkerEnv) {
-      headers.setContentType(undefined); // browser handles it
+    if (
+      lib_platform.hasStandardBrowserEnv ||
+      lib_platform.hasStandardBrowserWebWorkerEnv ||
+      utils.isReactNative(data)
+    ) {
+      headers.setContentType(undefined); // browser/web worker/RN handles it
     } else if (utils.isFunction(data.getHeaders)) {
       // Node.js FormData (like form-data package)
       resolveConfig_setFormDataHeaders(headers, data.getHeaders(), own('formDataHeaderPolicy'));
@@ -8230,7 +8321,9 @@ const encodeUTF8 = (str) =>
   }
 
   return newConfig;
-});
+}
+
+/* harmony default export */ const helpers_resolveConfig = (resolveConfig);
 
 ;// CONCATENATED MODULE: ./node_modules/axios/lib/adapters/xhr.js
 
@@ -8250,7 +8343,7 @@ const isXHRAdapterSupported = typeof XMLHttpRequest !== 'undefined';
 /* harmony default export */ const xhr = (isXHRAdapterSupported &&
   function (config) {
     return new Promise(function dispatchXhrRequest(resolve, reject) {
-      const _config = resolveConfig(config);
+      const _config = helpers_resolveConfig(config);
       let requestData = _config.data;
       const requestHeaders = core_AxiosHeaders.from(_config.headers).normalize();
       let { responseType, onUploadProgress, onDownloadProgress } = _config;
@@ -8629,12 +8722,50 @@ const DEFAULT_CHUNK_SIZE = 64 * 1024;
 
 const { isFunction: fetch_isFunction } = utils;
 
+/**
+ * Encode a UTF-8 string to a Latin-1 byte string for use with btoa().
+ * This is a modern replacement for the deprecated unescape(encodeURIComponent(str)) pattern.
+ *
+ * @param {string} str The string to encode
+ *
+ * @returns {string} UTF-8 bytes as a Latin-1 string
+ */
+const fetch_encodeUTF8 = (str) =>
+  encodeURIComponent(str).replace(/%([0-9A-F]{2})/gi, (_, hex) =>
+    String.fromCharCode(parseInt(hex, 16))
+  );
+
+// Node's WHATWG URL parser returns `username` and `password` percent-encoded.
+// Decode before composing the `auth` option so credentials such as
+// `my%40email.com:pass` are sent as `my@email.com:pass`. Falls back to the
+// original value for malformed input so a bad encoding never throws.
+const fetch_decodeURIComponentSafe = (value) => {
+  if (!utils.isString(value)) {
+    return value;
+  }
+
+  try {
+    return decodeURIComponent(value);
+  } catch (error) {
+    return value;
+  }
+};
+
 const test = (fn, ...args) => {
   try {
     return !!fn(...args);
   } catch (e) {
     return false;
   }
+};
+
+const maybeWithAuthCredentials = (url) => {
+  const protocolIndex = url.indexOf('://');
+  let urlToCheck = url;
+  if (protocolIndex !== -1) {
+    urlToCheck = urlToCheck.slice(protocolIndex + 3);
+  }
+  return urlToCheck.includes('@') || urlToCheck.includes(':');
 };
 
 const factory = (env) => {
@@ -8780,10 +8911,11 @@ const factory = (env) => {
       fetchOptions,
       maxContentLength,
       maxBodyLength,
-    } = resolveConfig(config);
+    } = helpers_resolveConfig(config);
 
     const hasMaxContentLength = utils.isNumber(maxContentLength) && maxContentLength > -1;
     const hasMaxBodyLength = utils.isNumber(maxBodyLength) && maxBodyLength > -1;
+    const own = (key) => (utils.hasOwnProp(config, key) ? config[key] : undefined);
 
     let _fetch = envFetch || fetch;
 
@@ -8806,6 +8938,46 @@ const factory = (env) => {
     let requestContentLength;
 
     try {
+      // HTTP basic authentication
+      let auth = undefined;
+      const configAuth = own('auth');
+
+      if (configAuth) {
+        const username = configAuth.username || '';
+        const password = configAuth.password || '';
+        auth = {
+          username,
+          password
+        };
+      }
+
+      if (maybeWithAuthCredentials(url)) {
+        const parsedURL = new URL(url, lib_platform.origin);
+
+        if (!auth && (parsedURL.username || parsedURL.password)) {
+          const urlUsername = fetch_decodeURIComponentSafe(parsedURL.username);
+          const urlPassword = fetch_decodeURIComponentSafe(parsedURL.password);
+          auth = {
+            username: urlUsername,
+            password: urlPassword
+          };
+        }
+
+        if (parsedURL.username || parsedURL.password) {
+          parsedURL.username = '';
+          parsedURL.password = '';
+          url = parsedURL.href;
+        }
+      }
+
+      if (auth) {
+        headers.delete('authorization');
+        headers.set(
+          'Authorization',
+          'Basic ' + btoa(fetch_encodeUTF8((auth.username || '') + ':' + (auth.password || '')))
+        );
+      }
+
       // Enforce maxContentLength for data: URLs up-front so we never materialize
       // an oversized payload. The HTTP adapter applies the same check (see http.js
       // "if (protocol === 'data:')" branch).
@@ -9525,6 +9697,7 @@ class Axios {
           forcedJSONParsing: Axios_validators.transitional(Axios_validators.boolean),
           clarifyTimeoutError: Axios_validators.transitional(Axios_validators.boolean),
           legacyInterceptorReqResOrdering: Axios_validators.transitional(Axios_validators.boolean),
+          advertiseZstdAcceptEncoding: Axios_validators.transitional(Axios_validators.boolean),
         },
         false
       );
