@@ -7,7 +7,7 @@ require('./sourcemap-register.js');/******/ (() => { // webpackBootstrap
 "use strict";
 __nccwpck_require__.a(module, async (__webpack_handle_async_dependencies__, __webpack_async_result__) => { try {
 __nccwpck_require__.r(__webpack_exports__);
-/* harmony import */ var _lib__WEBPACK_IMPORTED_MODULE_0__ = __nccwpck_require__(2965);
+/* harmony import */ var _lib__WEBPACK_IMPORTED_MODULE_0__ = __nccwpck_require__(2018);
 
 await (0,_lib__WEBPACK_IMPORTED_MODULE_0__/* ["default"] */ .A)();
 
@@ -16,7 +16,7 @@ __webpack_async_result__();
 
 /***/ }),
 
-/***/ 2965:
+/***/ 2018:
 /***/ ((__unused_webpack_module, __webpack_exports__, __nccwpck_require__) => {
 
 "use strict";
@@ -2986,6 +2986,18 @@ function getIDToken(aud) {
 const external_node_child_process_namespaceObject = require("node:child_process");
 // EXTERNAL MODULE: external "node:util"
 var external_node_util_ = __nccwpck_require__(7975);
+;// CONCATENATED MODULE: ./build/install-plan.js
+function getInstallPlan(version) {
+    const isV2 = /^v2\./.test(version);
+    const archive = isV2 ? 'duckdb-cli-linux-amd64.tar.gz' : 'duckdb_cli-linux-amd64.zip';
+    return {
+        archive,
+        url: `https://github.com/duckdb/duckdb/releases/download/${version}/${archive}`,
+        extractCommand: isV2 ? 'tar' : 'unzip',
+        extractArgs: isV2 ? ['-xzf', archive] : [archive],
+    };
+}
+
 ;// CONCATENATED MODULE: ./node_modules/axios/lib/helpers/bind.js
 
 
@@ -11840,6 +11852,7 @@ axios.default = axios;
 
 
 
+
 const execFileAsync = (0,external_node_util_.promisify)(external_node_child_process_namespaceObject.execFile);
 const MAX_ATTEMPTS = 3;
 const WAITING_TIME_MS = 5000;
@@ -11891,15 +11904,14 @@ function validateVersion(version) {
 }
 async function installDuckDB(version) {
     info(`📥 Installing DuckDB version: ${version}`);
-    const zipFile = 'duckdb_cli-linux-amd64.zip';
-    const url = `https://github.com/duckdb/duckdb/releases/download/${version}/${zipFile}`;
+    const { archive: zipFile, url, extractCommand, extractArgs } = getInstallPlan(version);
     try {
         // Download DuckDB CLI zip file
         info('⬇️ Downloading DuckDB CLI...');
         await execFileAsync('wget', [url]);
-        // Unzip the downloaded file
+        // Extract the downloaded archive (tar.gz for 2.x, zip otherwise)
         info('📦 Extracting DuckDB CLI...');
-        await execFileAsync('unzip', [zipFile]);
+        await execFileAsync(extractCommand, extractArgs);
         // Create directory and move binary
         info('📂 Setting up DuckDB installation...');
         await execFileAsync('mkdir', ['-p', '/opt/duckdb']);
@@ -13522,7 +13534,7 @@ if (typeof process === 'undefined' || process.type === 'renderer' || process.bro
  * Module dependencies.
  */
 
-const tty = __nccwpck_require__(2018);
+const tty = __nccwpck_require__(9637);
 const util = __nccwpck_require__(9023);
 
 /**
@@ -16860,7 +16872,7 @@ function plural(ms, msAbs, n, name) {
 "use strict";
 
 const os = __nccwpck_require__(857);
-const tty = __nccwpck_require__(2018);
+const tty = __nccwpck_require__(9637);
 const hasFlag = __nccwpck_require__(3813);
 
 const {env} = process;
@@ -45611,7 +45623,7 @@ module.exports = require("tls");
 
 /***/ }),
 
-/***/ 2018:
+/***/ 9637:
 /***/ ((module) => {
 
 "use strict";
