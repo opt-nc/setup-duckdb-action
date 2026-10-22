@@ -1,6 +1,7 @@
 import * as core from '@actions/core';
 import { execFile } from 'node:child_process';
 import { promisify } from 'node:util';
+import { getInstallPlan } from './install-plan';
 import axios, { AxiosResponse } from 'axios';
 
 const execFileAsync = promisify(execFile);
@@ -70,18 +71,17 @@ function validateVersion(version: string): void {
 
 async function installDuckDB(version: string): Promise<void> {
     core.info(`📥 Installing DuckDB version: ${version}`);
-    
-    const zipFile = 'duckdb_cli-linux-amd64.zip';
-    const url = `https://github.com/duckdb/duckdb/releases/download/${version}/${zipFile}`;
+
+    const { archive: zipFile, url, extractCommand, extractArgs } = getInstallPlan(version);
 
     try {
         // Download DuckDB CLI zip file
         core.info('⬇️ Downloading DuckDB CLI...');
         await execFileAsync('wget', [url]);
         
-        // Unzip the downloaded file
+        // Extract the downloaded archive (tar.gz for 2.x, zip otherwise)
         core.info('📦 Extracting DuckDB CLI...');
-        await execFileAsync('unzip', [zipFile]);
+        await execFileAsync(extractCommand, extractArgs);
         
         // Create directory and move binary
         core.info('📂 Setting up DuckDB installation...');
