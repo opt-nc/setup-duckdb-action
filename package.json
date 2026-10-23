@@ -6,7 +6,7 @@
     "build": "tsc",
     "lint": "eslint .",
     "prepare": "npm run build && ncc build build/index.js -o dist --source-map --license licenses.txt",
-    "test": "echo \"Warning: no test implemented\"",
+    "test": "tsc --ignoreConfig install-plan.ts tests/install-plan.test.ts --module commonjs --target ES2022 --esModuleInterop --skipLibCheck --types node --outDir .test-build && node --test .test-build/tests/install-plan.test.js",
     "all": "npm run lint && npm run prepare"
   },
   "dependencies": {
