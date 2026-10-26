@@ -48,3 +48,16 @@ for (const version of ['v2.0.0', 'v1.4.0']) {
         }
     });
 }
+
+test('plan adapts to platform and architecture', () => {
+    assert.equal(getInstallPlan('v1.4.0', 'linux', 'arm64').archive, 'duckdb_cli-linux-arm64.zip');
+    assert.equal(getInstallPlan('v1.4.0', 'darwin', 'arm64').archive, 'duckdb_cli-osx-arm64.zip');
+    assert.equal(getInstallPlan('v1.4.0', 'darwin', 'x64').archive, 'duckdb_cli-osx-amd64.zip');
+    assert.equal(getInstallPlan('v2.0.0', 'darwin', 'arm64').archive, 'duckdb-cli-osx-arm64.tar.gz');
+    assert.equal(getInstallPlan('v2.0.0', 'win32', 'arm64').archive, 'duckdb-cli-windows-arm64.tar.gz');
+    const win = getInstallPlan('v1.4.0', 'win32', 'x64');
+    assert.equal(win.archive, 'duckdb_cli-windows-amd64.zip');
+    assert.equal(win.binary, 'duckdb.exe');
+    assert.equal(win.extractCommand, 'tar');
+    assert.throws(() => getInstallPlan('v1.4.0', 'freebsd', 'x64'));
+});
