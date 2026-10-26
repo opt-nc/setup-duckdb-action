@@ -1,7 +1,7 @@
 import * as core from '@actions/core';
 import { execFile } from 'node:child_process';
 import { promisify } from 'node:util';
-import { chmod, mkdir, rename, rm } from 'node:fs/promises';
+import { chmod, copyFile, mkdir, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { getInstallPlan } from './install-plan';
@@ -74,6 +74,7 @@ function validateVersion(version: string): void {
 
 async function installDuckDB(version: string): Promise<void> {
     core.info(`📥 Installing DuckDB version: ${version}`);
+    core.info(`🖥️ os : ${process.platform}, arch : ${process.arch}`);
 
     const { archive: zipFile, binary, url, extractCommand, extractArgs } = getInstallPlan(version);
 
@@ -94,7 +95,8 @@ async function installDuckDB(version: string): Promise<void> {
         } else {
             const installDir = join(process.env.RUNNER_TOOL_CACHE || tmpdir(), 'duckdb', version);
             await mkdir(installDir, { recursive: true });
-            await rename(binary, join(installDir, binary));
+            await copyFile(binary, join(installDir, binary));
+            await rm(binary, { force: true });
             await chmod(join(installDir, binary), 0o755);
             core.addPath(installDir);
         }

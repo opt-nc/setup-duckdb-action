@@ -11943,6 +11943,7 @@ function validateVersion(version) {
 }
 async function installDuckDB(version) {
     info(`📥 Installing DuckDB version: ${version}`);
+    info(`🖥️ os : ${process.platform}, arch : ${process.arch}`);
     const { archive: zipFile, binary, url, extractCommand, extractArgs } = getInstallPlan(version);
     try {
         info('⬇️ Downloading DuckDB CLI...');
@@ -11960,7 +11961,8 @@ async function installDuckDB(version) {
         else {
             const installDir = (0,external_node_path_namespaceObject.join)(process.env.RUNNER_TOOL_CACHE || (0,external_node_os_namespaceObject.tmpdir)(), 'duckdb', version);
             await (0,promises_namespaceObject.mkdir)(installDir, { recursive: true });
-            await (0,promises_namespaceObject.rename)(binary, (0,external_node_path_namespaceObject.join)(installDir, binary));
+            await (0,promises_namespaceObject.copyFile)(binary, (0,external_node_path_namespaceObject.join)(installDir, binary));
+            await (0,promises_namespaceObject.rm)(binary, { force: true });
             await (0,promises_namespaceObject.chmod)((0,external_node_path_namespaceObject.join)(installDir, binary), 0o755);
             addPath(installDir);
         }
