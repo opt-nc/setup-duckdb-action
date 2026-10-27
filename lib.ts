@@ -1,6 +1,9 @@
 import * as core from '@actions/core';
 import { execFile } from 'node:child_process';
 import { promisify } from 'node:util';
+import { chmod, copyFile, mkdir, rm } from 'node:fs/promises';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 import { getInstallPlan } from './install-plan';
 import axios, { AxiosResponse } from 'axios';
 
@@ -71,35 +74,39 @@ function validateVersion(version: string): void {
 
 async function installDuckDB(version: string): Promise<void> {
     core.info(`📥 Installing DuckDB version: ${version}`);
+    core.info(`🖥️ os : ${process.platform}, arch : ${process.arch}`);
 
-    const { archive: zipFile, url, extractCommand, extractArgs } = getInstallPlan(version);
+    const { archive: zipFile, binary, url, extractCommand, extractArgs } = getInstallPlan(version);
 
     try {
-        // Download DuckDB CLI zip file
         core.info('⬇️ Downloading DuckDB CLI...');
-        await execFileAsync('wget', [url]);
-        
-        // Extract the downloaded archive (tar.gz for 2.x, zip otherwise)
+        await execFileAsync('curl', ['-fsSL', '-o', zipFile, url]);
+
         core.info('📦 Extracting DuckDB CLI...');
         await execFileAsync(extractCommand, extractArgs);
-        
-        // Create directory and move binary
+
         core.info('📂 Setting up DuckDB installation...');
-        await execFileAsync('mkdir', ['-p', '/opt/duckdb']);
-        await execFileAsync('mv', ['duckdb', '/opt/duckdb']);
-        await execFileAsync('chmod', ['+x', '/opt/duckdb/duckdb']);
-        
-        // Create symlink (requires sudo)
-        core.info('🔗 Creating symlink...');
-        await execFileAsync('sudo', ['ln', '-s', '/opt/duckdb/duckdb', '/usr/bin/duckdb']);
-        
-        // Clean up zip file
+        if (process.platform === 'linux') {
+            await execFileAsync('mkdir', ['-p', '/opt/duckdb']);
+            await execFileAsync('mv', [binary, '/opt/duckdb']);
+            await execFileAsync('chmod', ['+x', `/opt/duckdb/${binary}`]);
+            core.info('🔗 Creating symlink...');
+            await execFileAsync('sudo', ['ln', '-sf', `/opt/duckdb/${binary}`, '/usr/bin/duckdb']);
+        } else {
+            const installDir = join(process.env.RUNNER_TOOL_CACHE || tmpdir(), 'duckdb', version);
+            await mkdir(installDir, { recursive: true });
+            await copyFile(binary, join(installDir, binary));
+            await rm(binary, { force: true });
+            await chmod(join(installDir, binary), 0o755);
+            core.addPath(installDir);
+        }
+
         core.info('🧹 Cleaning up...');
-        await execFileAsync('rm', [zipFile]);
-        
+        await rm(zipFile, { force: true });
+
         // Verify installation
         core.info('✅ Verifying installation...');
-        const { stdout } = await execFileAsync('duckdb', ['--version']);
+        const { stdout } = await execFileAsync(binary === 'duckdb.exe' ? join(process.env.RUNNER_TOOL_CACHE || tmpdir(), 'duckdb', version, binary) : 'duckdb', ['--version']);
         
         core.info(`✔️ DuckDB ${version} successfully installed.`);
         core.info(stdout.trim());
