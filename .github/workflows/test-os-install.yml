@@ -1,0 +1,31 @@
+name: 🧪 Test DuckDB Setup On Different OS
+
+on:
+  pull_request:
+
+jobs:
+  test:
+    name: Test DuckDB Setup (${{ matrix.target.platform }} ${{ matrix.target.arch }}, ${{ matrix.version }})
+    runs-on: ${{ matrix.target.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        target:
+          - { os: ubuntu-26.04, platform: Linux, arch: AMD64 }
+          - { os: ubuntu-26.04-arm, platform: Linux, arch: ARM64 }
+          - { os: windows-2025, platform: Windows, arch: AMD64 }
+          - { os: windows-11-arm, platform: Windows, arch: ARM64 }
+          - { os: macos-15-intel, platform: macOS, arch: AMD64 }
+          - { os: macos-15, platform: macOS, arch: ARM64 }
+        version:
+          - v2.0.0
+          - v1.5.2
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Setup DuckDB
+        uses: ./
+        with:
+          version: ${{ matrix.version }}
+      - name: Verify DuckDB Installation
+        run: duckdb --version
