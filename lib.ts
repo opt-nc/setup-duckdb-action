@@ -11,7 +11,7 @@ const execFileAsync = promisify(execFile);
 
 const MAX_ATTEMPTS = 3;
 const WAITING_TIME_MS = 5000;
-const VERSION_REGEX = '^v[0-9]*\\.[0-9]*\\.[0-9]*$';
+const VERSION_REGEX = '^v[0-9]+\\.[0-9]+\\.[0-9]+$';
 
 interface GitHubRelease {
     tag_name: string;
@@ -75,7 +75,15 @@ function validateVersion(version: string): void {
     }
 }
 
+function assertSafeVersion(version: string): void {
+    const safeVersionPattern = /^v\d+\.\d+\.\d+$/;
+    if (!safeVersionPattern.test(version)) {
+        throw new Error(`Unsafe version value: ${version}`);
+    }
+}
+
 async function installDuckDB(version: string): Promise<void> {
+    assertSafeVersion(version);
     core.info(`📥 Installing DuckDB version: ${version}`);
     core.info(`🖥️ os : ${process.platform}, arch : ${process.arch}`);
 
