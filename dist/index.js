@@ -11895,7 +11895,7 @@ axios.default = axios;
 const execFileAsync = (0,external_node_util_.promisify)(external_node_child_process_namespaceObject.execFile);
 const MAX_ATTEMPTS = 3;
 const WAITING_TIME_MS = 5000;
-const VERSION_REGEX = '^v[0-9]*\\.[0-9]*\\.[0-9]*$';
+const VERSION_REGEX = '^v[0-9]+\\.[0-9]+\\.[0-9]+$';
 async function fetchLatestVersion(token) {
     const headers = {
         'Accept': 'application/vnd.github+json',
@@ -11944,7 +11944,14 @@ function validateVersion(version) {
         throw new Error(`Version not valid: ${version}`);
     }
 }
+function assertSafeVersion(version) {
+    const safeVersionPattern = /^v\d+\.\d+\.\d+$/;
+    if (!safeVersionPattern.test(version)) {
+        throw new Error(`Unsafe version value: ${version}`);
+    }
+}
 async function installDuckDB(version) {
+    assertSafeVersion(version);
     info(`📥 Installing DuckDB version: ${version}`);
     info(`🖥️ os : ${process.platform}, arch : ${process.arch}`);
     const { archive: zipFile, binary, url, extractCommand, extractArgs } = getInstallPlan(version);
