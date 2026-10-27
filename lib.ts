@@ -17,11 +17,14 @@ interface GitHubRelease {
     tag_name: string;
 }
 
-async function fetchLatestVersion(): Promise<string> {
-    const headers = {
+async function fetchLatestVersion(token: string): Promise<string> {
+    const headers: Record<string, string> = {
         'Accept': 'application/vnd.github+json',
         'X-GitHub-Api-Version': '2022-11-28'
     };
+    if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+    }
 
     core.info(`🔁 Attempting to get the latest DuckDB version (max attempts: ${MAX_ATTEMPTS})`);
 
@@ -122,7 +125,7 @@ export default async function (): Promise<void> {
         const inputVersion = core.getInput('version');
         core.debug(`🔍 Looking for the latest DuckDB version...`);
 
-        const latestVersion = await fetchLatestVersion();
+        const latestVersion = await fetchLatestVersion(core.getInput('github-token'));
         let selectedVersion: string;
 
         if (inputVersion === 'latest') {
