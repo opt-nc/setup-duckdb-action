@@ -11896,11 +11896,14 @@ const execFileAsync = (0,external_node_util_.promisify)(external_node_child_proc
 const MAX_ATTEMPTS = 3;
 const WAITING_TIME_MS = 5000;
 const VERSION_REGEX = '^v[0-9]*\\.[0-9]*\\.[0-9]*$';
-async function fetchLatestVersion() {
+async function fetchLatestVersion(token) {
     const headers = {
         'Accept': 'application/vnd.github+json',
         'X-GitHub-Api-Version': '2022-11-28'
     };
+    if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+    }
     info(`🔁 Attempting to get the latest DuckDB version (max attempts: ${MAX_ATTEMPTS})`);
     for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
         info(`🔁 Attempt ${attempt}/${MAX_ATTEMPTS} to get the latest DuckDB version...`);
@@ -11984,7 +11987,7 @@ async function installDuckDB(version) {
     try {
         const inputVersion = getInput('version');
         core_debug(`🔍 Looking for the latest DuckDB version...`);
-        const latestVersion = await fetchLatestVersion();
+        const latestVersion = await fetchLatestVersion(getInput('github-token'));
         let selectedVersion;
         if (inputVersion === 'latest') {
             info(`ℹ️ DuckDB latest version requested: ${latestVersion} will be installed.`);

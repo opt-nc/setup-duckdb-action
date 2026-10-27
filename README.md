@@ -13,16 +13,20 @@ This action installs [`duckdb`](https://github.com/duckdb/duckdb) with the versi
 
 **Not Required** The version you want to install. If no version is defined, the latest version will be installed.
 
+### `github-token`
+
+**Not Required** Token used to authenticate GitHub API calls when resolving the latest version (avoids 403 rate limiting). Defaults to `${{ github.token }}`.
+
 ## 🚀 Example usage
 
 ```yaml
-uses: opt-nc/setup-duckdb-action@v1.2.6
+uses: opt-nc/setup-duckdb-action@v1.3.0
 with:
-  version: v1.5.2
+  version: v2.0.0
 ```
 
 ```yaml
-uses: opt-nc/setup-duckdb-action@v1.2.6
+uses: opt-nc/setup-duckdb-action@v1.3.0
 ```
 
 ## 📑 Related resources
