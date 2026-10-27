@@ -117,7 +117,7 @@ async function installDuckDB(version: string): Promise<void> {
 
         // Verify installation
         core.info('✅ Verifying installation...');
-        const { stdout } = await execFileAsync(binary === 'duckdb.exe' ? join(process.env.RUNNER_TOOL_CACHE || tmpdir(), 'duckdb', version, binary) : 'duckdb', ['--version']);
+        const { stdout } = await execFileAsync('duckdb', ['--version']);
         
         core.info(`✔️ DuckDB ${version} successfully installed.`);
         core.info(stdout.trim());

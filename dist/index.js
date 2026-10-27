@@ -11980,7 +11980,7 @@ async function installDuckDB(version) {
         await (0,promises_namespaceObject.rm)(zipFile, { force: true });
         // Verify installation
         info('✅ Verifying installation...');
-        const { stdout } = await execFileAsync(binary === 'duckdb.exe' ? (0,external_node_path_namespaceObject.join)(process.env.RUNNER_TOOL_CACHE || (0,external_node_os_namespaceObject.tmpdir)(), 'duckdb', version, binary) : 'duckdb', ['--version']);
+        const { stdout } = await execFileAsync('duckdb', ['--version']);
         info(`✔️ DuckDB ${version} successfully installed.`);
         info(stdout.trim());
     }
