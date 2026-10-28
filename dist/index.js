@@ -7,7 +7,7 @@ require('./sourcemap-register.js');/******/ (() => { // webpackBootstrap
 "use strict";
 __nccwpck_require__.a(module, async (__webpack_handle_async_dependencies__, __webpack_async_result__) => { try {
 __nccwpck_require__.r(__webpack_exports__);
-/* harmony import */ var _lib__WEBPACK_IMPORTED_MODULE_0__ = __nccwpck_require__(2018);
+/* harmony import */ var _lib__WEBPACK_IMPORTED_MODULE_0__ = __nccwpck_require__(8341);
 
 await (0,_lib__WEBPACK_IMPORTED_MODULE_0__/* ["default"] */ .A)();
 
@@ -16,7 +16,7 @@ __webpack_async_result__();
 
 /***/ }),
 
-/***/ 2018:
+/***/ 8341:
 /***/ ((__unused_webpack_module, __webpack_exports__, __nccwpck_require__) => {
 
 "use strict";
@@ -184,10 +184,10 @@ function file_command_issueFileCommand(command, message) {
     if (!filePath) {
         throw new Error(`Unable to find environment variable for file command ${command}`);
     }
-    if (!fs.existsSync(filePath)) {
+    if (!external_fs_.existsSync(filePath)) {
         throw new Error(`Missing file at path: ${filePath}`);
     }
-    fs.appendFileSync(filePath, `${toCommandValue(message)}${os.EOL}`, {
+    external_fs_.appendFileSync(filePath, `${utils_toCommandValue(message)}${external_os_.EOL}`, {
         encoding: 'utf8'
     });
 }
@@ -2751,12 +2751,12 @@ function core_setSecret(secret) {
 function addPath(inputPath) {
     const filePath = process.env['GITHUB_PATH'] || '';
     if (filePath) {
-        issueFileCommand('PATH', inputPath);
+        file_command_issueFileCommand('PATH', inputPath);
     }
     else {
-        issueCommand('add-path', {}, inputPath);
+        command_issueCommand('add-path', {}, inputPath);
     }
-    process.env['PATH'] = `${inputPath}${path.delimiter}${process.env['PATH']}`;
+    process.env['PATH'] = `${inputPath}${external_path_.delimiter}${process.env['PATH']}`;
 }
 /**
  * Gets the value of an input.
@@ -2986,15 +2986,51 @@ function getIDToken(aud) {
 const external_node_child_process_namespaceObject = require("node:child_process");
 // EXTERNAL MODULE: external "node:util"
 var external_node_util_ = __nccwpck_require__(7975);
+;// CONCATENATED MODULE: external "node:fs/promises"
+const promises_namespaceObject = require("node:fs/promises");
+;// CONCATENATED MODULE: external "node:os"
+const external_node_os_namespaceObject = require("node:os");
+;// CONCATENATED MODULE: external "node:path"
+const external_node_path_namespaceObject = require("node:path");
 ;// CONCATENATED MODULE: ./build/install-plan.js
-function getInstallPlan(version) {
+function getInstallPlan(version, platform = process.platform, arch = process.arch) {
     const isV2 = /^v2\./.test(version);
-    const archive = isV2 ? 'duckdb-cli-linux-amd64.tar.gz' : 'duckdb_cli-linux-amd64.zip';
+    let target;
+    if (platform === 'linux') {
+        if (arch === 'x64')
+            target = 'linux-amd64';
+        else if (arch === 'arm64')
+            target = 'linux-arm64';
+        else
+            throw new Error(`Unsupported architecture for Linux: ${arch}`);
+    }
+    else if (platform === 'darwin') {
+        if (arch === 'x64')
+            target = 'osx-amd64';
+        else if (arch === 'arm64')
+            target = 'osx-arm64';
+        else
+            throw new Error(`Unsupported architecture for macOS: ${arch}`);
+    }
+    else if (platform === 'win32') {
+        if (arch === 'x64')
+            target = 'windows-amd64';
+        else if (arch === 'arm64')
+            target = 'windows-arm64';
+        else
+            throw new Error(`Unsupported architecture for Windows: ${arch}`);
+    }
+    else {
+        throw new Error(`Unsupported platform: ${platform}`);
+    }
+    const archive = isV2 ? `duckdb-cli-${target}.tar.gz` : `duckdb_cli-${target}.zip`;
+    const useTar = isV2 || platform === 'win32';
     return {
         archive,
+        binary: platform === 'win32' ? 'duckdb.exe' : 'duckdb',
         url: `https://github.com/duckdb/duckdb/releases/download/${version}/${archive}`,
-        extractCommand: isV2 ? 'tar' : 'unzip',
-        extractArgs: isV2 ? ['-xzf', archive] : [archive],
+        extractCommand: useTar ? 'tar' : 'unzip',
+        extractArgs: isV2 ? ['-xzf', archive] : useTar ? ['-xf', archive] : [archive],
     };
 }
 
@@ -11853,15 +11889,21 @@ axios.default = axios;
 
 
 
+
+
+
 const execFileAsync = (0,external_node_util_.promisify)(external_node_child_process_namespaceObject.execFile);
 const MAX_ATTEMPTS = 3;
 const WAITING_TIME_MS = 5000;
-const VERSION_REGEX = '^v[0-9]*\\.[0-9]*\\.[0-9]*$';
-async function fetchLatestVersion() {
+const VERSION_REGEX = '^v[0-9]+\\.[0-9]+\\.[0-9]+$';
+async function fetchLatestVersion(token) {
     const headers = {
         'Accept': 'application/vnd.github+json',
         'X-GitHub-Api-Version': '2022-11-28'
     };
+    if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+    }
     info(`🔁 Attempting to get the latest DuckDB version (max attempts: ${MAX_ATTEMPTS})`);
     for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
         info(`🔁 Attempt ${attempt}/${MAX_ATTEMPTS} to get the latest DuckDB version...`);
@@ -11902,27 +11944,40 @@ function validateVersion(version) {
         throw new Error(`Version not valid: ${version}`);
     }
 }
+function assertSafeVersion(version) {
+    const safeVersionPattern = /^v\d+\.\d+\.\d+$/;
+    if (!safeVersionPattern.test(version)) {
+        throw new Error(`Unsafe version value: ${version}`);
+    }
+}
 async function installDuckDB(version) {
+    assertSafeVersion(version);
     info(`📥 Installing DuckDB version: ${version}`);
-    const { archive: zipFile, url, extractCommand, extractArgs } = getInstallPlan(version);
+    info(`🖥️ os : ${process.platform}, arch : ${process.arch}`);
+    const { archive: zipFile, binary, url, extractCommand, extractArgs } = getInstallPlan(version);
     try {
-        // Download DuckDB CLI zip file
         info('⬇️ Downloading DuckDB CLI...');
-        await execFileAsync('wget', [url]);
-        // Extract the downloaded archive (tar.gz for 2.x, zip otherwise)
+        await execFileAsync('curl', ['-fsSL', '-o', zipFile, url]);
         info('📦 Extracting DuckDB CLI...');
         await execFileAsync(extractCommand, extractArgs);
-        // Create directory and move binary
         info('📂 Setting up DuckDB installation...');
-        await execFileAsync('mkdir', ['-p', '/opt/duckdb']);
-        await execFileAsync('mv', ['duckdb', '/opt/duckdb']);
-        await execFileAsync('chmod', ['+x', '/opt/duckdb/duckdb']);
-        // Create symlink (requires sudo)
-        info('🔗 Creating symlink...');
-        await execFileAsync('sudo', ['ln', '-s', '/opt/duckdb/duckdb', '/usr/bin/duckdb']);
-        // Clean up zip file
+        if (process.platform === 'linux') {
+            await execFileAsync('mkdir', ['-p', '/opt/duckdb']);
+            await execFileAsync('mv', [binary, '/opt/duckdb']);
+            await execFileAsync('chmod', ['+x', `/opt/duckdb/${binary}`]);
+            info('🔗 Creating symlink...');
+            await execFileAsync('sudo', ['ln', '-sf', `/opt/duckdb/${binary}`, '/usr/bin/duckdb']);
+        }
+        else {
+            const installDir = (0,external_node_path_namespaceObject.join)(process.env.RUNNER_TOOL_CACHE || (0,external_node_os_namespaceObject.tmpdir)(), 'duckdb', version);
+            await (0,promises_namespaceObject.mkdir)(installDir, { recursive: true });
+            await (0,promises_namespaceObject.copyFile)(binary, (0,external_node_path_namespaceObject.join)(installDir, binary));
+            await (0,promises_namespaceObject.rm)(binary, { force: true });
+            await (0,promises_namespaceObject.chmod)((0,external_node_path_namespaceObject.join)(installDir, binary), 0o755);
+            addPath(installDir);
+        }
         info('🧹 Cleaning up...');
-        await execFileAsync('rm', [zipFile]);
+        await (0,promises_namespaceObject.rm)(zipFile, { force: true });
         // Verify installation
         info('✅ Verifying installation...');
         const { stdout } = await execFileAsync('duckdb', ['--version']);
@@ -11939,7 +11994,7 @@ async function installDuckDB(version) {
     try {
         const inputVersion = getInput('version');
         core_debug(`🔍 Looking for the latest DuckDB version...`);
-        const latestVersion = await fetchLatestVersion();
+        const latestVersion = await fetchLatestVersion(getInput('github-token'));
         let selectedVersion;
         if (inputVersion === 'latest') {
             info(`ℹ️ DuckDB latest version requested: ${latestVersion} will be installed.`);
@@ -13534,7 +13589,7 @@ if (typeof process === 'undefined' || process.type === 'renderer' || process.bro
  * Module dependencies.
  */
 
-const tty = __nccwpck_require__(9637);
+const tty = __nccwpck_require__(2018);
 const util = __nccwpck_require__(9023);
 
 /**
@@ -16872,7 +16927,7 @@ function plural(ms, msAbs, n, name) {
 "use strict";
 
 const os = __nccwpck_require__(857);
-const tty = __nccwpck_require__(9637);
+const tty = __nccwpck_require__(2018);
 const hasFlag = __nccwpck_require__(3813);
 
 const {env} = process;
@@ -45623,7 +45678,7 @@ module.exports = require("tls");
 
 /***/ }),
 
-/***/ 9637:
+/***/ 2018:
 /***/ ((module) => {
 
 "use strict";

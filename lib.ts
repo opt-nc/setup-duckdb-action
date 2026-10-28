@@ -1,6 +1,9 @@
 import * as core from '@actions/core';
 import { execFile } from 'node:child_process';
 import { promisify } from 'node:util';
+import { chmod, copyFile, mkdir, rm } from 'node:fs/promises';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 import { getInstallPlan } from './install-plan';
 import axios, { AxiosResponse } from 'axios';
 
@@ -8,17 +11,20 @@ const execFileAsync = promisify(execFile);
 
 const MAX_ATTEMPTS = 3;
 const WAITING_TIME_MS = 5000;
-const VERSION_REGEX = '^v[0-9]*\\.[0-9]*\\.[0-9]*$';
+const VERSION_REGEX = '^v[0-9]+\\.[0-9]+\\.[0-9]+$';
 
 interface GitHubRelease {
     tag_name: string;
 }
 
-async function fetchLatestVersion(): Promise<string> {
-    const headers = {
+async function fetchLatestVersion(token: string): Promise<string> {
+    const headers: Record<string, string> = {
         'Accept': 'application/vnd.github+json',
         'X-GitHub-Api-Version': '2022-11-28'
     };
+    if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+    }
 
     core.info(`🔁 Attempting to get the latest DuckDB version (max attempts: ${MAX_ATTEMPTS})`);
 
@@ -69,34 +75,46 @@ function validateVersion(version: string): void {
     }
 }
 
-async function installDuckDB(version: string): Promise<void> {
-    core.info(`📥 Installing DuckDB version: ${version}`);
+function assertSafeVersion(version: string): void {
+    const safeVersionPattern = /^v\d+\.\d+\.\d+$/;
+    if (!safeVersionPattern.test(version)) {
+        throw new Error(`Unsafe version value: ${version}`);
+    }
+}
 
-    const { archive: zipFile, url, extractCommand, extractArgs } = getInstallPlan(version);
+async function installDuckDB(version: string): Promise<void> {
+    assertSafeVersion(version);
+    core.info(`📥 Installing DuckDB version: ${version}`);
+    core.info(`🖥️ os : ${process.platform}, arch : ${process.arch}`);
+
+    const { archive: zipFile, binary, url, extractCommand, extractArgs } = getInstallPlan(version);
 
     try {
-        // Download DuckDB CLI zip file
         core.info('⬇️ Downloading DuckDB CLI...');
-        await execFileAsync('wget', [url]);
-        
-        // Extract the downloaded archive (tar.gz for 2.x, zip otherwise)
+        await execFileAsync('curl', ['-fsSL', '-o', zipFile, url]);
+
         core.info('📦 Extracting DuckDB CLI...');
         await execFileAsync(extractCommand, extractArgs);
-        
-        // Create directory and move binary
+
         core.info('📂 Setting up DuckDB installation...');
-        await execFileAsync('mkdir', ['-p', '/opt/duckdb']);
-        await execFileAsync('mv', ['duckdb', '/opt/duckdb']);
-        await execFileAsync('chmod', ['+x', '/opt/duckdb/duckdb']);
-        
-        // Create symlink (requires sudo)
-        core.info('🔗 Creating symlink...');
-        await execFileAsync('sudo', ['ln', '-s', '/opt/duckdb/duckdb', '/usr/bin/duckdb']);
-        
-        // Clean up zip file
+        if (process.platform === 'linux') {
+            await execFileAsync('mkdir', ['-p', '/opt/duckdb']);
+            await execFileAsync('mv', [binary, '/opt/duckdb']);
+            await execFileAsync('chmod', ['+x', `/opt/duckdb/${binary}`]);
+            core.info('🔗 Creating symlink...');
+            await execFileAsync('sudo', ['ln', '-sf', `/opt/duckdb/${binary}`, '/usr/bin/duckdb']);
+        } else {
+            const installDir = join(process.env.RUNNER_TOOL_CACHE || tmpdir(), 'duckdb', version);
+            await mkdir(installDir, { recursive: true });
+            await copyFile(binary, join(installDir, binary));
+            await rm(binary, { force: true });
+            await chmod(join(installDir, binary), 0o755);
+            core.addPath(installDir);
+        }
+
         core.info('🧹 Cleaning up...');
-        await execFileAsync('rm', [zipFile]);
-        
+        await rm(zipFile, { force: true });
+
         // Verify installation
         core.info('✅ Verifying installation...');
         const { stdout } = await execFileAsync('duckdb', ['--version']);
@@ -115,7 +133,7 @@ export default async function (): Promise<void> {
         const inputVersion = core.getInput('version');
         core.debug(`🔍 Looking for the latest DuckDB version...`);
 
-        const latestVersion = await fetchLatestVersion();
+        const latestVersion = await fetchLatestVersion(core.getInput('github-token'));
         let selectedVersion: string;
 
         if (inputVersion === 'latest') {

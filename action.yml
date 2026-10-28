@@ -8,6 +8,10 @@ inputs:
     description: 'The version to install'
     required: false
     default: 'latest'
+  github-token:
+    description: 'GitHub token used to authenticate API calls (avoids rate limiting)'
+    required: false
+    default: ${{ github.token }}
 runs:
   using: 'node24'
   main: 'dist/index.js'
